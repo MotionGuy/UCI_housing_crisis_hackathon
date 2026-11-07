@@ -1,9 +1,9 @@
 # Clear It: pitch and demo script
 
-**Draft 1, 2026-11-07.** Owner: `pitch-storyline` agent.
-**Read-aloud length: ~535 spoken words (talk track + demo narration) ≈ 4:05 of speech at 130 words/min, about 4:15 with clicks (inside the 3–5 minute limit).** Counted with a script on 2026-11-07. The word count covers only the quoted lines in "Talk track" and the "Presenter says" column of the demo script.
+**Draft 2, 2026-11-07.** Owner: `pitch-storyline` agent.
+**Read-aloud length: 542 spoken words (326 talk track + 216 demo narration) ≈ 4:10 of speech at 130 words/min, about 4:35 with clicks and page loads (inside the 3–5 minute limit).** Words counted with a script on 2026-11-07; they cover only the quoted lines in "Talk track" and the quoted text in the "Presenter says" column. The ~0:25 for clicks is an **Estimate** (12 demo steps; most lines are spoken while clicking); time it at rehearsal.
 
-Status: the rules engine (`src/lib/adu/evaluate.ts`) exists and was run against the demo inputs below (output matches this script). **The UI and the demo application do not exist yet**, so the demo is written against the planned flow. Each step the app can't show yet is listed in [Section 8](#8-open-items-and-unverified-claims).
+Status: the demo script now follows the real app on branch `feat/demo-review-submit` (PR #4, **not merged to `main` yet**). Screen titles and button labels were read from the code (`src/components/wizard/adu-wizard.tsx`, `results.tsx`, `review.tsx`, `ui.tsx`, `src/lib/adu/demo-application.ts`, `src/lib/adu/evaluate.ts`). The script was checked against the code, **not yet rehearsed in a browser** (see [Section 8](#8-open-items-and-unverified-claims)).
 
 Sources are numbered `[S#]` and listed in [Section 7](#7-sources). "Estimate" means a number we made up from stated assumptions, not a measured result.
 
@@ -18,59 +18,61 @@ Sources are numbered `[S#]` and listed in [Section 7](#7-sources). "Estimate" me
 
 ---
 
-## 2. Talk track (target ~4:00)
+## 2. Talk track (target ~4:30)
 
-| # | Section | Time | Words |
+| # | Section | Words | Time |
 |---|---|---|---|
-| 1 | Problem | 0:30 | 67 |
-| 2 | Target market | 0:17 | 37 |
-| 3 | Unique value proposition | 0:09 | 19 |
-| 4 | Live demo | 1:30 | 175 + clicks (see Section 3) |
-| 5 | Competitive landscape | 0:25 | 55 |
-| 6 | Implementation plan | 0:28 | 62 |
-| 7 | Feasibility | 0:15 | 32 |
-| 8 | Impact | 0:40 | 88 |
-| | **Total** | **~4:15** | **535** |
+| 1 | Problem | 62 | 0:29 |
+| 2 | Target market | 30 | 0:14 |
+| 3 | Unique value proposition | 19 | 0:09 |
+| 4 | Live demo | 216 | 1:40 speech + ~0:25 clicks (Estimate) = ~2:05 |
+| 5 | Competitive landscape | 49 | 0:23 |
+| 6 | Implementation plan | 59 | 0:27 |
+| 7 | Feasibility | 26 | 0:12 |
+| 8 | Impact | 81 | 0:37 |
+| | **Total** | **542** | **~4:35** |
 
-### 1. Problem (0:30)
+If time runs short, cut in this order: section 7 (Feasibility; the demo already shows sources), then the Implementation plan's second sentence. Never cut demo steps 10–12.
 
-> "California already has a fast path for ADUs. If a project meets the written rules, the city must approve it: no hearing, no discretion. Almost nobody gets through it quickly. Each of Orange County's 34 cities has its own forms and checklists, and applications bounce back. Newport Beach's own ADU site says most projects need two to three rounds of review, each taking ten to twenty days."
+### 1. Problem
+
+> "California already has a fast path for ADUs: if a project meets the written rules, the city must approve it, with no hearing. Yet applications keep bouncing back. Each of Orange County's 34 cities has its own forms and checklists, and Newport Beach's own ADU site says most projects need two to three rounds of review, each taking ten to twenty days."
 
 Backing: ministerial approval and the 60-day deadline, Gov. Code §§ 66317, 66323 [S5]; 34 OC cities, lane brief [S15]; 2–3 rounds of 10–20 days [S1].
 
-### 2. Target market (0:17)
+### 2. Target market
 
-> "We start with homeowners adding an ADU in Newport Beach. Newport puts its rules, forms and pre-approved plans online, so we can do one city well. Small builders, nonprofit project managers and city permit techs come next."
+> "We start with homeowners adding an ADU in Newport Beach, which puts its rules, forms and pre-approved plans online. Small builders, nonprofit project managers and city permit techs come next."
 
 Backing: city rules matrix [S3], forms [S1], pre-approved plans [S9b]. Why one city: lane brief, "One city done well beats many cities done badly" [S15].
 
-### 3. Unique value proposition (0:09)
+### 3. Unique value proposition
 
 > "We don't explain the rules. We get the first submission right: one review cycle instead of two or three."
 
-### 4. Live demo (1:30)
+### 4. Live demo
 
-See the [demo script](#3-demo-script). Transition line into the demo: *"Here's an application a plan checker would send back."*
+See the [demo script](#3-demo-script). Its first line is the transition: *"Here's an application a plan checker would send back."*
 
-### 5. Competitive landscape (0:25)
+### 5. Competitive landscape
 
-> "Blitz AI sells AI plan review to cities. Corona offers its pre-screen free, and says it checks for missing documents, not code compliance. Symbium checks whether a California lot can have an ADU. We work for the applicant, before submission, with Newport's rules and state law side by side and a source on every flag."
+> "Blitz AI sells AI plan review to cities. Corona's free Blitz pre-screen checks for missing documents, not code compliance. Symbium checks whether a California lot can have an ADU. We work for the applicant, before submission, with a source on every flag, and we fill in the city's forms."
 
 Backing: [Section 4](#4-competitor-table) [S10–S14].
 
-### 6. Implementation plan (0:28)
+### 6. Implementation plan
 
-> "Today: Newport Beach, single-family ADUs. Next: more Newport project types, then more Orange County cities, then SB 9 and small multifamily. The rules move: the state renumbered ADU law in 2024, and Newport rewrote its ADU rules in 2023 and again in 2025. Every rule carries its source and the date we checked it, so re-checking is a list, not a rewrite."
+> "Today: Newport Beach, single-family ADUs. Next: more Newport project types, more Orange County cities, then SB 9 and small multifamily. The rules move: the state renumbered ADU law in 2024, and Newport changed its ADU rules in 2023 and 2025. Every rule carries its source and the date we checked it, so re-checking is a list, not a rewrite."
 
 Backing: SB 477 renumbering, March 25, 2024 [S8]; Newport Ordinance 2023-2 and the update adopted August 26, 2025 [S7]. Maintenance: each `Citation` in `src/lib/adu/` has a label and URL, and `CITY.checkedOn` holds the access date. Proposed owner: one team member re-checks every rule each January (state changes) and when the city posts a new ordinance (see Q&A).
 
-### 7. Feasibility (0:15)
+### 7. Feasibility
 
-> "This is buildable because the requirements are public, the rules are written down, and approval is ministerial. Every pass or fail comes from a written rule with a citation, never from AI."
+> "Requirements are public, rules are written down, and approval is ministerial. Every pass or fail comes from a written rule with a citation, never from AI."
 
-### 8. Impact (0:40)
+### 8. Impact
 
-> "Here's the math, and every guess is labeled. Newport says ten to twenty days per review round. Add an estimated one to two weeks for the designer to fix and resubmit. Each round we prevent saves roughly three to five weeks; preventing two saves up to ten. We can't prove that yet; the next step is a pilot that counts review rounds. And the same engine extends to SB 9 and small multifamily, where every round costs more. That's how fewer rounds helps turn four years into two."
+> "The math, with every guess labeled. Newport says ten to twenty days per review round. Add an estimated one to two weeks to fix and resubmit. So each round we prevent saves roughly two and a half to five weeks. We can't prove that yet; the next step is a pilot that counts review rounds. And the same engine extends to SB 9 and small multifamily, where every round costs more. That's how fewer rounds helps turn four years into two."
 
 Full math: [Section 5](#5-impact-math).
 
@@ -78,34 +80,43 @@ Full math: [Section 5](#5-impact-math).
 
 ## 3. Demo script
 
-**Sample application (planned `src/lib/adu/demo-application.ts`):** a homeowner on an existing single-family lot wants a **detached, 1-bedroom, 900 sq ft** backyard ADU, **16 ft** tall, with a **3 ft** side/rear setback, **not sure** whether the lot is in the Coastal Zone, not near transit, not using a pre-approved plan. The address is made up (sample data only).
+Run from branch `feat/demo-review-submit` (PR #4) until it is merged. Start on the home page (`npm run dev`, then `/`). Never type live.
 
-**Planted mistakes and the check that catches each one** (verified by running `evaluateAdu` on these inputs, 2026-11-07):
+**Sample application** (`demoAnswers` and `demoProfile` in `src/lib/adu/demo-application.ts`): made-up owner "Sam Sample" at "123 Example Lane, Newport Beach"; existing single-family lot; **detached, 1-bedroom, 900 sq ft**, **17 ft** tall, **3 ft** side/rear setback, Coastal Zone **"not sure"**, not near transit, no garage conversion, no pre-approved plan.
 
-| # | Planted mistake | Input | Engine result | Fix | Source shown | Why it matters |
-|---|---|---|---|---|---|---|
-| 1 | Too big for a 1-bedroom | `squareFeet: 900`, `bedrooms: 1` | check `size` = **fail** | 800 sq ft | Newport Municipal Code § 20.48.200 [S3] | 850 sq ft city cap for studio/1-bed |
-| 2 | Setback too small | `sideRearSetbackFeet: 3` | check `setback` = **fail** | 4 ft | Gov. Code § 66323(a)(2) [S5] | State guarantees approval at 4 ft side/rear |
-| 3 | Coastal Zone unknown | `coastalZone: "unsure"` | check `coastal` = **warn** | Look up the address in the city's Address Search Tool | Newport Beach Address Search Tool [S1] | A Coastal Development Permit may come first and can involve a hearing |
-| 4 | City-vs-state conflict: deed restriction | (any non-JADU ADU) | `documents[]` "Deed restriction" carries a **warning**; `rights[]` item `deed` | Ask the city before recording one | City permit page [S1] vs. 2026 matrix [S3] vs. HCD letter [S4] | HCD: "Deed restrictions are not authorized under state law for ADUs." [S4] |
+**What the results page shows for it** (read from `evaluate.ts` and `results.tsx`; the order on screen is fails first, then warnings, then conflicts):
 
-**Fixed version:** same application with `squareFeet: 800`, `sideRearSetbackFeet: 4`, `coastalZone: "no"` (after the address lookup). Engine result: verdict `fast-path`, headline "Qualifies for the fast path", checks `size`, `setback`, `height` and `guaranteed` all **pass**, `parking` is info, no fails or warns. The deed-restriction document warning still shows (it's always shown for non-JADU ADUs).
+| # | Planted mistake | Input | Row on screen | Source shown on screen | Fix (presenter says it) |
+|---|---|---|---|---|---|
+| 1 | Too big for a 1-bedroom | `squareFeet: 900`, `bedrooms: 1` | **Size**, red: "Newport Beach allows up to 850 sq ft for a studio or 1 bedroom. Yours is 900 sq ft." | Newport Beach Municipal Code § 20.48.200 [S3] | 800 sq ft |
+| 2 | Setback too small | `sideRearSetbackFeet: 3` | **Side and rear setbacks**, red: "New ADUs need at least 4 ft ... Yours is 3 ft." | Cal. Gov. Code § 66323(a)(2) [S5] | 4 ft |
+| 3 | Too tall for the state guarantee | `heightFeet: 17` | **Height**, amber: "17 ft is above the 16 ft the state guarantees." | Cal. Gov. Code § 66321(b)(4) [S6] | 16 ft |
+| 4 | Coastal Zone unknown | `coastalZone: "unsure"` | **Coastal Zone**, amber: "Check your address with the city's Address Search Tool." | Newport Beach Address Search Tool [S1] | Look up the address (result in the fixed version: not coastal) |
+| 5 | City-vs-state conflict | (any non-JADU ADU) | **"City vs. state conflict: Deed restriction (signed and notarized)"**, amber card | "City permit page" [S1] and "HCD findings letter to Newport Beach, Oct 1, 2024" [S4] | Ask the city before recording one |
 
-Optional 5th mistake if time allows (not narrated below): `heightFeet: 17` → check `height` = **warn** (above the 16 ft the state guarantees for detached ADUs, Gov. Code § 66321(b)(4) [S6]).
+Status banner for this application: **"Fix these first (4 issues)"**, "2 must change before you can submit, 2 to check." The **Review and submit** button is disabled, with the hint "Fix these first: change the 2 items marked in red, then review your forms."
 
-| Step | Click | Screen shows | Presenter says (175 words) |
+**Fixed version** (`fixedAnswers`): 800 sq ft, 16 ft, 4 ft setback, Coastal Zone "no". Result: headline "Qualifies for the fast path", banner **"Ready to submit"**, "Who reviews it" lists only the building permit. The deed-restriction conflict card stays (under "Check these (1)"), because it applies to every non-JADU ADU. With Coastal Zone "no", the app fills **one** city form (the building permit worksheet), not the Coastal Development Permit affidavit.
+
+| Step | Click | Screen shows | Presenter says |
 |---|---|---|---|
-| 1 | **Load demo application** on the home page | Intake, step 1, filled in with the sample application | "Here's an application a plan checker would send back. A homeowner wants a one-bedroom, nine-hundred-square-foot backyard ADU." |
-| 2 | **Next** through the intake steps (no typing) | Lot type, ADU type, size and bedrooms, height and setbacks, Coastal Zone ("Not sure"), transit | "Clear It asks what a plan checker will look at: the lot, the ADU type, size, height, setbacks, and the Coastal Zone." |
-| 3 | **See results** | Headline "Change the design to qualify for the fast path"; issues list | "Before anyone submits, it finds the problems." |
-| 4 | Point at `size` (red) | Fail, fix, citation: Municipal Code § 20.48.200 | "Nine hundred square feet is over Newport's eight-fifty limit for one bedroom. Fix: eight hundred. Every flag shows its source." |
-| 5 | Point at `setback` (red) | Fail, citation: Gov. Code § 66323(a)(2) | "Three-foot setback. State law guarantees approval at four." |
-| 6 | Point at `coastal` (amber) | Warn, link to the city's Address Search Tool | "They don't know if they're in the Coastal Zone. If they are, a coastal permit comes first, and that can mean a hearing." |
-| 7 | Point at the deed restriction in **Documents** | Document with warning; `deed` item under rights, citing the HCD letter | "And a conflict. Newport's permit page asks every ADU for a deed restriction. The city's own 2026 summary says only junior ADUs need one, and the state told Newport deed restrictions aren't allowed for ADUs. We show both sides, with sources." |
-| 8 | **Load fixed version** | Same application, 800 sq ft, 4 ft setback, not in the Coastal Zone | "Now the fixed version." |
-| 9 | **See results** | "Qualifies for the fast path" / **Ready to submit**; all checks green, including "State-guaranteed ADU" | "Every check passes, and this is an ADU the state says the city must approve. Ready to submit: one review cycle is the goal." |
+| 1 | On "Where's your property?" (step 1 of 7), click **Load demo application**, then **Continue** | Address, zoning "R-1" and APN filled in; "Sample data loaded. Click Continue." | "Here's an application a plan checker would send back: a homeowner's one-bedroom backyard ADU. The data is made up." |
+| 2 | Click the highlighted option on each of steps 2–4: **I'm not sure** ("Is it in the Coastal Zone?"), **A single-family house** ("What's on the lot now?"), **Detached ADU** ("Choose your ADU type") | Picking an option moves to the next step | "Seven short steps, the same things a plan checker looks at. They aren't sure about the Coastal Zone." |
+| 3 | "Size it up": **Continue** | 900 sq ft, 1 bedroom, 17 ft, 3 ft setback, transit "No" | "Nine hundred square feet, seventeen feet tall, three feet from the property line." |
+| 4 | "Tell us about you": **Continue**; "Your team and budget": **Fill my forms** | Owner Sam Sample; demo designer and contractor | (no line; keep clicking) |
+| 5 | (results page loads) | Headline "Change the design to qualify for the fast path"; red banner **"Fix these first (4 issues)"**; "Not legal advice. Rules checked on 2026-11-07." | "Before anyone submits, Clear It finds four problems, and every one shows its source." |
+| 6 | Point at **Size** and **Side and rear setbacks** (red) | Each row: the limit, their number, "Source: ..." link | "Newport caps a one-bedroom at eight hundred fifty square feet. State law guarantees approval at four-foot setbacks, not three." |
+| 7 | Point at **Height** and **Coastal Zone** (amber) | Warnings with sources | "Seventeen feet is over the sixteen the state guarantees. And if the lot is coastal, a coastal permit comes first." |
+| 8 | Point at **City vs. state conflict: Deed restriction** | Amber card with two source links | "And a conflict: Newport's permit page asks every ADU for a deed restriction; the city's 2026 summary and the state say only junior ADUs need one. We show both, with sources." |
+| 9 | Point at the disabled **Review and submit** button | Hint: "Fix these first ..." | "It won't let you submit until the red items are fixed." |
+| 10 | Click **Load fixed version (demo)** | Banner turns green: **"Ready to submit"**; headline "Qualifies for the fast path" | "Here's the fixed design: eight hundred square feet, sixteen feet, four-foot setbacks, not coastal. Ready to submit." |
+| 11 | Click **Review and submit** | "Check what we filled in": every value on the building permit form, each with a **Change** button or "Set by Clear It"; the valuation is marked "Estimate: $300 per sq ft" | "Before anything leaves, the homeowner checks every value we put on the city's form, and can change any of them." |
+| 12 | Tick **I checked these and they're correct.**, click **Submit**, then the **PDF** button next to "Building permit application (Combo Building & Solar worksheet)" and open the file | "Your package is ready to file"; downloads for the filled PDF and "How to file (summary)"; note that Clear It doesn't file anything with the city | "This is Newport's real building permit form, filled in. We don't just explain the rules; we fill out the city's forms. The homeowner signs and files it, and one review cycle is the goal." |
 
-Rules for the presenter: never type live; if the app breaks, switch to the backup screenshots (not made yet, see open items).
+Presenter notes:
+- Use the single **PDF** button in step 12, not **Download everything**: the browser may ask permission for several downloads at once. Have a PDF viewer ready, or open the file from the browser's download bar.
+- Don't read the valuation aloud. It is the app's $300/sq ft estimate (labeled "Estimate" on screen), not a city figure.
+- If the app breaks, switch to backup screenshots (not made yet; see open items).
 
 ---
 
@@ -178,6 +189,12 @@ Approval is ministerial: it depends on written, objective rules, so a fixed rule
 **"What's the business model?"** *(answer is a proposal, not validated)*
 Free for homeowners in early cities to build trust and data; paid seats for small builders and nonprofit developers who file many applications; later, a version cities can offer applicants. No pricing research done yet.
 
+**"Which building permit form do you fill, and is it the current one?"**
+We fill the "Worksheet for Combo Building & Solar Permit Application", the form the city's ADU permit page links as "Building Permit"; our copy is byte-identical to the city's live file as of November 7, 2026 [S17]. The Building Division's forms page also lists a newer "Building Permit Application" (file modified May 2025) [S18], and a teammate is confirming with the Permit Center which one ADU applicants should use. That's the problem in miniature: the city's own pages point to different forms, and an applicant has no way to know which one the counter expects. When the answer comes in, we update one form map and every user gets the right form.
+
+**"Does Clear It submit to the city?"**
+No. Newport takes ADU applications through its own process; Clear It fills the forms, the homeowner checks every value and confirms, and then downloads the package with filing instructions. The homeowner signs and files it.
+
 **"Where does 'over 90% deemed incomplete' come from?"**
 We don't use that number, because we haven't found a source for it. Our baseline is Newport's own "2–3 rounds."
 
@@ -203,6 +220,8 @@ All accessed **2026-11-07** unless noted.
 - **[S14]** Symbium Build, https://build.symbium.com/. Quotes: "Learn instantly if you can have an ADU on your property."; "Check if your California property is eligible."
 - **[S15]** Team lane brief, `docs/lane-brief.md` (hackathon challenge framing: ~4 years → ~2 on the ministerial path; OC's 34 cities; "One city done well beats many cities done badly"). Internal, not an external source; the 4→2 figure is the challenge's, not ours.
 - **[S16]** CrossBeam, https://cc-crossbeam.vercel.app/. Describes reading a "14-item corrections letter" and drafting a response with code citations for California ADUs.
+- **[S17]** Newport Beach, "Worksheet for Combo Building & Solar Permit Application", https://www.newportbeachca.gov/home/showpublisheddocument/15043/635682493202100000, linked as "Building Permit" from [S1]. Repo copy: `docs/forms/newport-beach/submit/building-permit-application-worksheet.pdf` (served from `public/forms/newport-beach/`). Byte-identical to the live file as of 2026-11-07 (team check, reported to the pitch agent; not re-run in this pass).
+- **[S18]** Newport Beach Building Division, "Building Permit Application" (file modified May 6, 2025), https://www.newportbeachca.gov/home/showpublisheddocument/3258/638824129709970000, listed on the Building Division forms page. Details from `docs/adu-application-guide.md` (that doc calls it "Combo Building Permit Application" in one place); not re-opened in this pass.
 
 ---
 
@@ -216,22 +235,28 @@ All accessed **2026-11-07** unless noted.
 - **"State ADU law changes yearly, effective January 1"**: not directly verified. A search result summarizing HCD's March 2026 handbook mentions bills effective Jan 1, 2025 (SB 1211, AB 2533), June 30, 2025, Oct 10, 2025 and Jan 1, 2026, but we couldn't open the PDF to confirm. The pitch uses only the verified facts (SB 477 renumbering in 2024, handbook updated March 2026).
 - **Departments that sign off**: left out of the pitch; still an open question in `docs/project-context.md`.
 - **Impact money figures**: all labeled Estimate (designer hours, rate, rent).
+- **Draft 2: "each round we prevent saves roughly three to five weeks; preventing two saves up to ten"** (spoken impact line): changed to "two and a half to five weeks" to match the math table (17–34 days, Section 5); the "up to ten" clause was cut for time (still in Section 5).
+- **Draft 2: the $300/sq ft valuation** shown on the review screen is the app's estimate (labeled "Estimate" in the app; no city source). The script tells the presenter not to read it aloud.
+- **Draft 2: "Newport rewrote its ADU rules in 2023 and again in 2025"**: softened to "changed" (sources show an adopted 2023 ordinance and a 2025 update [S7], not the size of each change).
 
 ### Not verified
 - [S3], [S4], [S5], [S6], [S9b]: taken from the team research doc and the code's citations, not re-read in this pass (no PDF text tool). Re-check the matrix and HCD quote before the demo.
 - Whether Blitz AI or Symbium serve Newport Beach.
 - OC ADU calculator (site failed to load), Cembla, AIEntitle, PlanCheckerPro.
 - Whether Newport charges for extra plan-check rounds; number of ADU applications per year in Newport.
+- [S17] byte-identical check and [S18] details: reported by the team / application guide, not re-run in this pass.
 
-### Flags for the Context agent (demo steps the app can't show yet)
-1. **No UI.** `src/app/page.tsx` is a placeholder. Steps 1–9 all need the intake, results page and buttons → `app-builder`.
-2. **No demo application.** `src/lib/adu/demo-application.ts` doesn't exist. Create it with the inputs in Section 3 (broken and fixed versions) → `app-builder`.
-3. **No "Load fixed version" button** (step 8). Needs a second preset, or a "fix all" action on the results page → `app-builder`.
-4. **No "Ready to submit" status.** The engine's headline is "Qualifies for the fast path", and the verdict is `fast-path` even when `warn` checks remain (e.g. Coastal Zone "yes"). Decide the rule (proposal: ready = no `fail` and no `warn`) and show it on the results page → `app-builder` (or `rules-checks` if it goes in the engine).
-5. **No plain-English "fix" field.** `Check` has `detail` but no separate `fix`. Fixes are inside the `detail` text for `size` and `setback`, but the results page needs a clear fix line for each issue → `rules-checks` (type change in `src/lib/adu/types.ts`).
-6. **The deed-restriction conflict isn't a check.** It shows as a `documents[]` warning and a `rights[]` item, not an issue in the checks list, so it may not look like a flagged issue on the results page. Either the results page shows document warnings next to the issues, or `rules-checks` adds a check → `app-builder` / `rules-checks`.
-7. **No correction-prevention checks for the package itself** (missing documents, plan-set items, coastal sequencing). The demo's mistakes are design-standard issues; the pitch says "what a plan checker would flag", which holds for size and setbacks but would be stronger with one missing-document check → `rules-checks`.
-8. **No AI features built.** The pitch avoids claiming any; keep it that way unless they ship.
-9. **"Not legal advice" disclaimer** must be visible on the results page (the Q&A relies on it) → `app-builder`.
-10. **Backup screenshots** of each demo step, in case the live app fails → whoever rehearses, after the UI exists.
-11. **Re-check the script against the real app** once steps 1–4 above are done (`pitch-storyline`).
+### Flags for the Context agent
+
+**Now covered by the app (PR #4), removed from this list:** the intake UI, the demo application, "Load demo application" / "Load fixed version" (home) and "Load fixed version (demo)" (results), the "Ready to submit" status (no fails and no warnings), issues-first order, the deed-restriction conflict shown as an issue card, the "Not legal advice" line (results, review and submit screens, and page footer), the review screen and the Submit/download step.
+
+**Still open:**
+1. **PR #4 is not merged.** The demo only works from `feat/demo-review-submit` until it lands on `main` → whoever merges (teammate / main session).
+2. **Not rehearsed in a browser.** This script was checked against the code only. Do one full run-through, time it, and fix any label that differs → `pitch-storyline` + presenter.
+3. **Backup screenshots** of each demo step (and the filled PDF), in case the live app fails → whoever rehearses.
+4. **Which building permit form ADU applicants should use** (worksheet doc 15043 vs. the May 2025 "Building Permit Application", doc 3258). A teammate is confirming with the Permit Center. Note: `docs/project-context.md` ("Decisions") and `docs/adu-application-guide.md` already mark this as **resolved**, but the main session says it is still being confirmed. Reconcile the docs once the Permit Center answers → `project-context`.
+5. **No separate "Fix:" line.** Each issue row states the limit and the user's number (and a source), but not the fix as its own line (e.g. "Fix: 800 sq ft"); the presenter says the fix. Optional: add a `fix` field to `Check` → `rules-checks` (needs the owner of `src/lib/adu/types.ts`).
+6. **No package-completeness checks** (missing documents, plan-set items, coastal sequencing). All planted mistakes are design-standard issues. One missing-document check would make "what a plan checker would flag" stronger → `rules-checks`.
+7. **The closing shows one city form.** The fixed version has Coastal Zone "no", so only the building permit worksheet is filled; the Coastal Development Permit affidavit appears only while Coastal Zone is "not sure" or "yes", and the broken version can't reach Submit. Fine for the demo; mention it only if asked. Related open decision: fill the affidavit "just in case" for "not sure"? → `project-context`.
+8. **"Who reviews it" lists permits, not departments.** Which departments sign off is still an open question; the pitch doesn't claim departments → `project-context`.
+9. **No AI features built.** The pitch claims none; keep it that way unless they ship.
