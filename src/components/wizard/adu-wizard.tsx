@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import {
-  Building2,
   CircleHelp,
   DoorOpen,
-  Fence,
   FileSignature,
   House,
   HousePlus,
@@ -61,8 +59,6 @@ const COASTAL: Option<YesNoUnsure>[] = [
 const LOTS: Option<LotType>[] = [
   { value: "existing-single-family", title: "A single-family house", description: "The most common ADU project", icon: House },
   { value: "planned-single-family", title: "Nothing yet, building a house too", description: "Submit the house and ADU together", icon: HousePlus },
-  { value: "multifamily", title: "Apartments or condos", description: "Allowed by state law, not covered here yet", icon: Building2 },
-  { value: "vacant", title: "An empty lot, no house planned", description: "An ADU needs a main house", icon: Fence },
 ];
 
 const ADU_TYPES: Option<AduType>[] = [
@@ -88,9 +84,7 @@ export function AduWizard() {
     <K extends keyof AduAnswers>(k: K) =>
     (v: AduAnswers[K]) => {
       setAnswer(k, v);
-      // An ADU needs a house: stop early on lots this version doesn't cover.
-      if (k === "lotType" && (v === "vacant" || v === "multifamily")) setDone(true);
-      else next();
+      next();
     };
 
   if (done) {
@@ -162,7 +156,7 @@ export function AduWizard() {
 
     case 2:
       return (
-        <StepCard {...common} icon={House} title="What's on the lot now?" subtitle="An ADU is a second home on a lot with a house.">
+        <StepCard {...common} icon={House} title="What's on the lot now?" subtitle="An ADU is a second home on a single-family lot.">
           <OptionList options={LOTS} value={a.lotType} onPick={pick("lotType")} />
         </StepCard>
       );
