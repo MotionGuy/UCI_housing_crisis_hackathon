@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CircleHelp,
   DoorOpen,
@@ -8,6 +8,7 @@ import {
   House,
   HousePlus,
   MapPin,
+  PlayCircle,
   Ruler,
   ShieldCheck,
   Trees,
@@ -17,11 +18,13 @@ import {
   Waves,
 } from "lucide-react";
 import type { AduAnswers, AduType, LotType, YesNoUnsure } from "@/lib/adu/types";
+import { demoAnswers, demoProfile, fixedAnswers } from "@/lib/adu/demo-application";
 import { CITY } from "@/lib/adu/newport-beach";
 import { EMPTY_PERSON, EMPTY_PRO, type Person, type Profile } from "@/lib/forms/types";
 import type { ParcelLookupResult } from "@/lib/parcel/types";
 import { ParcelCard } from "./parcel-card";
 import { AduResultsView } from "./results";
+import { ReviewView, SubmitView } from "./review";
 import { OptionList, Segmented, StepCard, TextField, Toggle, linkClass, type Option } from "./ui";
 
 const STEP_COUNT = 7;
@@ -74,20 +77,43 @@ export function AduWizard() {
   const [step, setStep] = useState(0);
   const [a, setA] = useState<AduAnswers>(INITIAL_ANSWERS);
   const [p, setP] = useState<Profile>(INITIAL_PROFILE);
-  const [done, setDone] = useState(false);
+  const [view, setView] = useState<"intake" | "results" | "review" | "submit">("intake");
+  /** Set when a step was opened from the review screen; Continue goes back there. */
+  const [returnToReview, setReturnToReview] = useState(false);
+  const [demoLoaded, setDemoLoaded] = useState(false);
+
+  // The $300/sq ft valuation is an estimate (no city source); the review screen labels it.
+  const formProfile = useMemo(() => ({ ...p, valuation: p.valuation || a.squareFeet * 300 }), [p, a.squareFeet]);
 
   const setAnswer = <K extends keyof AduAnswers>(k: K, v: AduAnswers[K]) => setA((prev) => ({ ...prev, [k]: v }));
   const setProfile = <K extends keyof Profile>(k: K, v: Profile[K]) => setP((prev) => ({ ...prev, [k]: v }));
   const setOwner = (k: keyof Person, v: string) => setP((prev) => ({ ...prev, owner: { ...prev.owner, [k]: v } }));
 
-  const [lookup, setLookup] = useState<{ status: "idle" | "loading" | "found" | "error"; message?: string }>({ status: "idle" });
+  // "manual": the demo is loaded, so Continue skips the lookup and shows the zoning/APN fields.
+  const [lookup, setLookup] = useState<{ status: "idle" | "loading" | "found" | "error" | "manual"; message?: string }>({ status: "idle" });
+
+  /**
+   * Fills every answer from the demo application; the presenter then clicks Continue through.
+   * The demo is made-up data: it skips the address lookup, and setP(demoProfile) clears any parcel from an earlier lookup.
+   */
+  const loadDemo = (answers: AduAnswers) => {
+    setA(answers);
+    setP(demoProfile);
+    setLookup({ status: "manual" });
+    setDemoLoaded(true);
+  };
 
   // The Coastal Zone step (1) is skipped when the city's GIS already answered it.
   const skipCoastal = !!p.parcel;
   const next = () => {
+    if (returnToReview) {
+      setReturnToReview(false);
+      setView("review");
+      return;
+    }
     const to = step === 0 && skipCoastal ? 2 : step + 1;
     if (to < STEP_COUNT) setStep(to);
-    else setDone(true);
+    else setView("results");
   };
   const back = step > 0 ? () => setStep(step === 2 && skipCoastal ? 0 : step - 1) : undefined;
 
@@ -113,6 +139,7 @@ export function AduWizard() {
       setLookup({ status: "error", message: "The lookup didn't work. You can enter the details by hand." });
     }
   };
+
   const pick =
     <K extends keyof AduAnswers>(k: K) =>
     (v: AduAnswers[K]) => {
@@ -120,17 +147,46 @@ export function AduWizard() {
       next();
     };
 
-  if (done) {
+  if (view === "results") {
     return (
       <AduResultsView
         answers={a}
-        profile={{ ...p, valuation: p.valuation || a.squareFeet * 300 }}
+        profile={formProfile}
+        onLoadFixed={
+          demoLoaded
+            ? () => {
+                setA(fixedAnswers);
+                setProfile("parcel", undefined); // the demo address has no parcel
+                setLookup({ status: "manual" });
+              }
+            : undefined
+        }
+        onReview={() => setView("review")}
         onEdit={() => {
-          setDone(false);
+          setView("intake");
           setStep(0);
         }}
       />
     );
+  }
+  if (view === "review") {
+    return (
+      <ReviewView
+        answers={a}
+        profile={formProfile}
+        valuationEstimated={!p.valuation}
+        onBack={() => setView("results")}
+        onEditStep={(s) => {
+          setStep(s);
+          setReturnToReview(true);
+          setView("intake");
+        }}
+        onSubmit={() => setView("submit")}
+      />
+    );
+  }
+  if (view === "submit") {
+    return <SubmitView answers={a} profile={formProfile} onBack={() => setView("review")} />;
   }
 
   const isNew = a.aduType === "detached" || a.aduType === "attached";
@@ -140,24 +196,26 @@ export function AduWizard() {
     case 0: {
       const found = lookup.status === "found" && p.parcel;
       const failed = lookup.status === "error";
+      const manual = failed || lookup.status === "manual";
       return (
         <StepCard
           {...common}
           icon={MapPin}
           title="Where's your property?"
           subtitle="We'll look up its zoning, parcel number and Coastal Zone status in the city's map."
-          onContinue={found || failed ? next : findProperty}
-          continueLabel={found ? "Continue" : failed ? "Continue by hand" : lookup.status === "loading" ? "Looking up…" : "Find my property"}
+          onContinue={found || manual ? next : findProperty}
+          continueLabel={found || lookup.status === "manual" ? "Continue" : failed ? "Continue by hand" : lookup.status === "loading" ? "Looking up…" : "Find my property"}
           continueDisabled={!a.address.trim() || lookup.status === "loading"}
           missingHint={lookup.status === "loading" ? undefined : "Add the property address to continue."}
         >
           <div className="space-y-4">
+            <DemoBar onLoad={loadDemo} loaded={demoLoaded} />
             <TextField label="Property address" required autoComplete="street-address" placeholder="123 Example St, Newport Beach" value={a.address} onChange={changeAddress} />
             {found && <ParcelCard parcel={p.parcel!} />}
             {failed && (
               <p className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-[13.5px] leading-snug text-amber-200">{lookup.message}</p>
             )}
-            {failed && (
+            {manual && (
             <div className="grid gap-4 sm:grid-cols-2">
               <TextField
                 label="Zoning district"
@@ -302,7 +360,7 @@ export function AduWizard() {
               label="Estimated construction cost ($)"
               type="number"
               inputMode="numeric"
-              placeholder={`${(a.squareFeet * 300).toLocaleString("en-US")} (city estimate: $300 per sq ft)`}
+              placeholder={`${(a.squareFeet * 300).toLocaleString("en-US")} (Estimate: $300 per sq ft)`}
               value={p.valuation || ""}
               onChange={(v) => setProfile("valuation", Number(v))}
             />
@@ -329,6 +387,23 @@ export function AduWizard() {
       );
     }
   }
+}
+
+/** "Load demo application" / "Load fixed version", for the live demo. */
+function DemoBar({ onLoad, loaded }: { onLoad: (a: AduAnswers) => void; loaded: boolean }) {
+  const btn =
+    "flex h-9 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-[13px] font-medium text-neutral-200 transition hover:bg-white/[0.07] active:scale-[0.97]";
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-white/12 p-2.5">
+      <button type="button" className={btn} onClick={() => onLoad(demoAnswers)}>
+        <PlayCircle className="size-4 text-accent" /> Load demo application
+      </button>
+      <button type="button" className={btn} onClick={() => onLoad(fixedAnswers)}>
+        Load fixed version
+      </button>
+      <span className="text-xs text-neutral-500">{loaded ? "Sample data loaded. Click Continue." : "Made-up sample data"}</span>
+    </div>
+  );
 }
 
 /** ["a", "b", "c"] -> "a, b and c" */
