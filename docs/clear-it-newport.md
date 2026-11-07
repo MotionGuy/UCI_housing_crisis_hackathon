@@ -112,6 +112,11 @@ Comparing the 2026 matrix with HCD's 2024 letter:
 | 10. JADU replacement parking | Garage-conversion row appears to require replacement parking for JADUs citywide | **Possible remaining conflict.** Confirm the column layout |
 | 7. Attached ADU height | "Per base zone" | **Unclear.** HCD says the city must allow 25 ft (or the house's limit, if lower) |
 
+**Deed restriction, exact quotes** (used by the engine check `deed-restriction`; checked 2026-11-07):
+- City [permit page](https://www.newportbeachadu.org/permit), required documents (no ADU-type limit): "A deed restriction, signed and notarized, stating:" "The ADU won't be sold as a separate property" / "The ADU won't be used as a short-term rental (such as AirBnB)" / "If building a JADU, the property owner will live on the property."
+- City [2026 matrix](https://www.newportbeachadu.org/s/ADU-Ordinance-Summary-Matrix-2026.pdf), Deed Restriction row: JADU = "Prior to issuance of building permit, owner must record deed restriction (prepared by the City)"; ADU columns = "N/A" (quoted from `docs/adu-application-guide.md` X1).
+- [HCD findings letter, Oct 1, 2024](https://www.hcd.ca.gov/sites/default/files/docs/policy-and-research/ordinance-review-letters/newport-beach-adu-findings-100124.pdf), finding 13 (Section 20.48.200 I., Deed Restrictions): "Government Code section 66333, subdivision (c) requires the recordation of a deed restriction for JADUs, which are limited to restricting the sale of the JADU separate from the single-family residence. Government Code section 66315 requires that no additional standards, other than those provided in Government Code Section 66314, shall be used, or imposed on accessory dwelling units. Deed restrictions are not authorized under state law for ADUs. The City may not require a deed restriction prior to and as a condition of approval of an ADU building permit application."
+
 This table is the demo's strongest material: real, sourced examples of where an applicant can get conflicting answers.
 
 ## How to submit in Newport Beach

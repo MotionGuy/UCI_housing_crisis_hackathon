@@ -112,6 +112,20 @@ export function evaluateAdu(a: AduAnswers): AduResult {
     checks.push(warn("owner", "Owner lives on site", "State JADU law has required the owner to live in the house or the JADU. A 2025 change may limit this to JADUs that share a bathroom. Confirm with the city.", STATE.jadu.citation));
   }
 
+  // ---- Deed restriction conflict (city page vs. city 2026 summary vs. HCD) ----
+  // Info, not warn: it's the city's conflict, not something the applicant can fix,
+  // so it must not keep a correct application from being "ready to submit".
+  if (a.aduType !== "jadu") {
+    checks.push(
+      info(
+        "deed-restriction",
+        "City asks for a deed restriction state law doesn't allow",
+        "The city's permit page lists a signed, notarized deed restriction for every application, but the city's own 2026 rules summary requires one only for junior ADUs, and the state housing department (HCD) told the city that deed restrictions are not authorized under state law for ADUs. Don't record one yet: ask your planner whether it's required for your ADU type, and point them to the city's 2026 ADU Ordinance Summary Matrix.",
+        HCD_NEWPORT_LETTER,
+      ),
+    );
+  }
+
   // ---- Coastal Zone ----
   if (a.coastalZone === "yes") {
     checks.push(warn("coastal", "Coastal Zone", "You may need a Coastal Development Permit before the building permit. It can involve a hearing, so this part may not be fast.", CITY.permitPage));
