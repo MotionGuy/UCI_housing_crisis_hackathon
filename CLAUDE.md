@@ -2,7 +2,7 @@
 
 ## Project context: read first
 
-**"Clear It": TurboTax for ADU permits in Orange County, starting with Newport Beach.** An applicant-facing, step-by-step intake that tells homeowners and builders which forms, sign-offs and fees apply, and catches the problems that would trigger a correction letter (with plain-English fixes) **before they submit**. The goal: one review cycle instead of 2–3. Team of 4, about 4 hours.
+**"AutoADU": TurboTax for ADU permits in Orange County, starting with Newport Beach.** An applicant-facing, step-by-step intake that tells homeowners and builders which forms, sign-offs and fees apply, and catches the problems that would trigger a correction letter (with plain-English fixes) **before they submit**. The goal: one review cycle instead of 2–3. Team of 4, about 4 hours.
 
 Source of truth: `docs/lane-brief.md`. Condensed brief: `docs/project-context.md`. Research: `docs/clear-it-newport.md`; application package and form field maps: `docs/adu-application-guide.md`; pitch and demo script: `docs/pitch.md`.
 

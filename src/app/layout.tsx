@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Clear It",
+  title: "AutoADU",
   description:
     "Get your Newport Beach ADU permit application right the first time.",
 };

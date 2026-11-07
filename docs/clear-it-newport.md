@@ -1,4 +1,4 @@
-# Clear it: Newport Beach ADU research
+# AutoADU: Newport Beach ADU research
 
 Research checked on **November 7, 2026**. Facts marked "not verified" come from secondary sources. City pages have no dates, so confirm anything important with the Newport Beach Planning Division: (949) 644-3204.
 

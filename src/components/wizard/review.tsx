@@ -16,7 +16,7 @@ export const STEPS = { address: 0, coastal: 1, lot: 2, aduType: 3, size: 4, owne
 interface PreviewField {
   label: string;
   value: string;
-  /** Wizard step to change it; absent = set by Clear It. */
+  /** Wizard step to change it; absent = set by AutoADU. */
   step?: number;
   note?: string;
 }
@@ -163,7 +163,7 @@ export function ReviewView({
       total={0}
       icon={ClipboardCheck}
       title="Check what we filled in"
-      subtitle="Every value Clear It put on your city forms. Change anything that's wrong."
+      subtitle="Every value AutoADU put on your city forms. Change anything that's wrong."
       onBack={onBack}
       onContinue={onSubmit}
       continueLabel="Submit"
@@ -214,7 +214,7 @@ export function ReviewView({
                       <PencilLine className="size-3.5" /> Change
                     </button>
                   ) : (
-                    <span className="shrink-0 pt-1 text-[11px] text-neutral-600">Set by Clear It</span>
+                    <span className="shrink-0 pt-1 text-[11px] text-neutral-600">Set by AutoADU</span>
                   )}
                 </div>
               ))}
@@ -235,7 +235,7 @@ export function ReviewView({
           />
           <span className="text-[15px] text-white">I checked these and they&apos;re correct.</span>
         </label>
-        <p className="text-xs text-neutral-500">Not legal advice. Clear It fills the forms; you are responsible for what you file.</p>
+        <p className="text-xs text-neutral-500">Not legal advice. AutoADU fills the forms; you are responsible for what you file.</p>
       </div>
     </StepCard>
   );
@@ -259,7 +259,7 @@ export function SubmitView({ answers, profile, onBack }: { answers: AduAnswers; 
     <StepCard step={0} total={0} icon={Send} title="Your package is ready to file" subtitle="Download it, sign it, and file it with the city yourself." onBack={onBack} wide>
       <div className="space-y-8">
         <p className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-sm leading-snug text-neutral-300">
-          Clear It doesn&apos;t file anything with the City of Newport Beach. You (or your designer) file the package with the city, following
+          AutoADU doesn&apos;t file anything with the City of Newport Beach. You (or your designer) file the package with the city, following
           the steps below. Track it in the city&apos;s{" "}
           <a className={linkClass} href={CITY.portal} target="_blank" rel="noreferrer">
             CiViC portal
@@ -350,10 +350,10 @@ function DownloadRow({ title, label, onClick }: { title: string; label: string; 
 function howToFile(a: AduAnswers, r: AduResult, permits: string[], steps: string[]): string {
   const list = (items: string[]) => items.map((s, i) => `${i + 1}. ${s}`).join("\n");
   return [
-    "Clear It: how to file your Newport Beach ADU application",
+    "AutoADU: how to file your Newport Beach ADU application",
     `Property: ${a.address}`,
     "",
-    "Clear It does not file anything with the city. You file this package yourself.",
+    "AutoADU does not file anything with the city. You file this package yourself.",
     "",
     "Permits you need, in order:",
     list(permits),

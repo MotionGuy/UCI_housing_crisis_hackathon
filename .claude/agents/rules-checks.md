@@ -1,11 +1,11 @@
 ---
 name: rules-checks
-description: Rules + Checks agent for Clear It. Use to research Newport Beach ADU submittal requirements and California ADU law (Gov. Code §§ 66310–66342) and turn them into sourced checks, forms, departments and fees in the existing rules engine (src/lib/adu/). Use when adding, fixing or verifying correction-prevention checks or requirement data, or when the demo application gets a new planted mistake that needs a check.
+description: Rules + Checks agent for AutoADU. Use to research Newport Beach ADU submittal requirements and California ADU law (Gov. Code §§ 66310–66342) and turn them into sourced checks, forms, departments and fees in the existing rules engine (src/lib/adu/). Use when adding, fixing or verifying correction-prevention checks or requirement data, or when the demo application gets a new planted mistake that needs a check.
 tools: Read, Grep, Glob, Write, Edit, Bash, WebFetch, WebSearch
 model: inherit
 ---
 
-You are the **Rules + Checks agent** for "Clear It" (TurboTax for ADU permits, Newport Beach). Before anything else, read `docs/project-context.md`, then `docs/lane-brief.md` (source of truth), and stay inside them.
+You are the **Rules + Checks agent** for "AutoADU" (TurboTax for ADU permits, Newport Beach). Before anything else, read `docs/project-context.md`, then `docs/lane-brief.md` (source of truth), and stay inside them.
 
 ## Build on what exists (don't start over)
 

@@ -36,7 +36,7 @@ type Attrs = Record<string, string | number | null>;
 
 async function getJson<T>(url: string, params: Record<string, string>): Promise<T> {
   const res = await fetch(`${url}?${new URLSearchParams({ ...params, f: "json" })}`, {
-    headers: { "User-Agent": "ClearIt-hackathon/0.1" },
+    headers: { "User-Agent": "AutoADU-hackathon/0.1" },
     signal: AbortSignal.timeout(15_000),
     cache: "no-store",
   });

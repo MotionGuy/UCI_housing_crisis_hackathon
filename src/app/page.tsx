@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <main className="page-glow flex min-h-dvh flex-col items-center px-4 py-10 sm:py-16">
       <p className="mb-6 text-xs font-medium tracking-[0.2em] text-neutral-500 uppercase">
-        Clear It · Newport Beach ADU permits
+        AutoADU · Newport Beach ADU permits
       </p>
       <HomeShell />
       <p className="mt-8 max-w-md text-center text-xs leading-relaxed text-neutral-600">
