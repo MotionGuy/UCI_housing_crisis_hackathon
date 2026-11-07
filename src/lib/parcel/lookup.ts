@@ -69,19 +69,35 @@ const DIRECTIONS: Record<string, string> = { N: "N", S: "S", E: "E", W: "W", NOR
  * ("123 Example Blvd E"), while people usually type it first ("123 E Example Blvd").
  */
 export function addressVariants(input: string): string[] {
-  const base = input.replace(/,?\s*newport beach.*$/i, "").replace(/\s+/g, " ").trim();
-  const m = base.match(/^(\d+[A-Z]?)\s+(north|south|east|west|[nsew])\.?\s+(.+)$/i);
+  const base = input
+    .replace(/,?\s*newport beach.*$/i, "")
+    .replace(/,?\s*(ca|california)?\s*\d{5}(-\d{4})?\s*$/i, "")
+    .replace(/[.,]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const short = base.replace(/\b(street|avenue|drive|boulevard|place|lane|court|road|circle|highway|terrace)\b/i, (w) => SUFFIXES[w.toLowerCase()]);
+  const m = short.match(/^(\d+[A-Z]?)\s+(north|south|east|west|[nsew])\s+(.+)$/i);
   const moved = m ? `${m[1]} ${m[3]} ${DIRECTIONS[m[2].toUpperCase()]}` : null;
-  return [base, ...(moved ? [moved] : [])];
+  return [...new Set([base, short, ...(moved ? [moved] : [])])];
 }
+
+const SUFFIXES: Record<string, string> = {
+  street: "St", avenue: "Ave", drive: "Dr", boulevard: "Blvd", place: "Pl", lane: "Ln",
+  court: "Ct", road: "Rd", circle: "Cir", highway: "Hwy", terrace: "Ter",
+};
 
 type Candidate = { address: string; score: number; location: { x: number; y: number } };
 
 async function geocode(address: string): Promise<Candidate | undefined> {
-  for (const variant of addressVariants(address)) {
-    const geo = await getJson<{ candidates?: Candidate[] }>(GEOCODER, { SingleLine: variant, outSR: "4326", maxLocations: "1" });
-    const best = geo.candidates?.[0];
-    if (best && best.score >= MIN_SCORE) return best;
+  const variants = addressVariants(address);
+  // The city's server sometimes returns no candidates when busy, so make a second pass.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    for (const variant of variants) {
+      const geo = await getJson<{ candidates?: Candidate[] }>(GEOCODER, { SingleLine: variant, outSR: "4326", maxLocations: "1" });
+      const best = geo.candidates?.[0];
+      if (best && best.score >= MIN_SCORE) return best;
+    }
+    if (attempt === 0) await new Promise((r) => setTimeout(r, 600));
   }
   return undefined;
 }
