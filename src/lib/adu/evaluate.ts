@@ -119,7 +119,7 @@ export function evaluateAdu(a: AduAnswers): AduResult {
     checks.push(
       info(
         "deed-restriction",
-        "City asks for a deed restriction state law doesn't allow",
+        "City asks for a deed restriction state law appears not to allow",
         "The city's permit page lists a signed, notarized deed restriction for every application, but the city's own 2026 rules summary requires one only for junior ADUs, and the state housing department (HCD) told the city that deed restrictions are not authorized under state law for ADUs. Don't record one yet: ask your planner whether it's required for your ADU type, and point them to the city's 2026 ADU Ordinance Summary Matrix.",
         HCD_NEWPORT_LETTER,
       ),
