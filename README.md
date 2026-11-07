@@ -62,12 +62,46 @@ src/
     page.tsx                 Intake + results (placeholder for now)
     layout.tsx               Root layout
     globals.css              Tailwind entry point
+    api/
+      adu/check/route.ts     POST: ADU answers -> fast-path verdict, checks, documents, fees
+      housing/route.ts       GET: homes from the housing research agent (or sample data)
+  data/
+    listings.json            Homes found by the housing research agent
+  lib/
+    adu/                     Clear It rules engine (types, Newport data, state law, evaluate)
+    types.ts, sample-data.ts Listing types and samples for the housing agent
+scripts/
+  research-housing.ts        Housing research agent (Claude + web search)
 docs/
   lane-brief.md              Original project context (source of truth)
   project-context.md         Shared brief for the team and Claude agents
-.claude/agents/              Project subagents (project-context)
+  clear-it-newport.md        Newport Beach ADU research (state law, city rules, HCD findings, fees)
+  forms/newport-beach/       City forms and reference PDFs, with an index
+.claude/agents/              Project subagents (project-context, rules-checks, app-builder, pitch-storyline)
 .plans/                      Specs written by /jmo-workflow:interview
 ```
+
+## Housing research agent
+
+`scripts/research-housing.ts` is an AI agent that finds homes for sale in Orange County by itself. It uses Claude (`claude-opus-5-5`) with web search and web fetch to:
+
+1. Search affordable-homeownership programs (Habitat for Humanity, community land trusts, city below-market-rate programs, HUD homes) and low-priced market listings.
+2. Open each source page and record address, price, bedrooms, HOA, program, eligibility and status.
+3. Save the results to `src/data/listings.json`, and its raw notes to `src/data/research-notes.md`.
+
+`/api/housing` serves these listings automatically. Until the agent has run once, it serves sample data.
+
+**Run it locally** (takes a few minutes; add `ANTHROPIC_API_KEY` to `.env.local` first):
+
+```bash
+npm run research:housing
+```
+
+Change the search with environment variables: `RESEARCH_AREA`, `RESEARCH_MAX_PRICE` (default 600000) and `RESEARCH_LIMIT` (default 25).
+
+**Run it in the background on GitHub:** the workflow in `.github/workflows/research-housing.yml` runs the agent on GitHub's servers and commits the new listings. It has no schedule; it runs only when someone starts it. First add a repository secret named `ANTHROPIC_API_KEY` (**Settings → Secrets and variables → Actions**), then open **Actions → Housing research agent → Run workflow**.
+
+The agent only records homes from pages it opened, but always check the source links before you show a listing in the demo.
 
 ## How we work together
 

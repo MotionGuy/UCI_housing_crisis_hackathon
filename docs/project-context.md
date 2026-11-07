@@ -1,8 +1,11 @@
 # Project context (shared brief)
 
-Maintained by the `project-context` agent (`.claude/agents/project-context.md`). Every agent and teammate reads this before starting work. Source of truth: `docs/lane-brief.md` (wins over the README and any other doc).
+Maintained by the `project-context` agent (`.claude/agents/project-context.md`). Every agent and teammate reads this before starting work. Source of truth: `docs/lane-brief.md` (wins over the README and any other doc). Main research: `docs/clear-it-newport.md`.
 
 ## Mission
+
+> **We cut the 2–3 review cycles most ADU applications go through to one.**
+> ("2–3 cycles" source: Newport ADU guidebook. "Cut to one" is our goal, shown by the demo, not yet measured.)
 
 **"Clear It": TurboTax for ADU permits in Orange County, starting with Newport Beach.** The goal is to make the fast, ministerial approval path the normal path by getting the **first submission right**. We're not building a tool that just explains the rules.
 
@@ -60,9 +63,19 @@ Plan check is a large share of a homeowner's ADU timeline, and the same rules en
 
 ## Current repo status
 
-- The old home-finder code (housing/jobs/commute/affordability) and `docs/problem-space.md` were removed on 2026-11-07.
-- What's left: Next.js shell, `src/app/layout.tsx`, a placeholder `src/app/page.tsx` with the disclaimer, and tooling.
-- Not built yet: requirements data, rules/checks engine, intake, results page, sample application with planted mistakes.
+**Built (by a teammate, on `main`):**
+- `docs/clear-it-newport.md`: sourced Newport ADU research. Covers state law (§§ 66310–66342), the city's 2026 ordinance matrix, HCD's 13 findings (2024 letter) and which look fixed, **city-vs-state conflicts** (deed restriction listed for every ADU on the permit page; JADU replacement parking; attached-ADU height), submittal steps, fees ($850–$1,700 plan check; $850–$2,100 building permit), and "most projects need 2–3 rounds" of 10–20 days.
+- `docs/forms/newport-beach/`: city forms and reference PDFs, with an index and form fields as JSON.
+- **Rules engine** `src/lib/adu/`: `types.ts` (contract: `AduAnswers` → `AduResult`), `newport-beach.ts`, `state-law.ts`, `evaluate.ts` (checks for size, setbacks, height, parking, coastal zone, garage, owner, pre-approved plans; rights; documents; fees; steps). `POST /api/adu/check`.
+- Housing research agent (`scripts/research-housing.ts`, GitHub Action, `src/app/api/housing`, `src/lib/types.ts`, `src/data/listings.json`): from the earlier home-finder idea. **Kept, but outside the Clear It lane.**
+
+**Not built yet:**
+- UI: intake, results page and demo button (`src/app/page.tsx` is a placeholder) → `app-builder`.
+- Correction-prevention checks (what gets applications sent back: missing documents, plan-set items, coastal sequencing). Current checks are mostly about whether the project is allowed → `rules-checks`.
+- Demo application with planted mistakes (`src/lib/adu/demo-application.ts`) → `app-builder` creates it if missing.
+- Pitch and demo script (`docs/pitch.md`) → `pitch-storyline`.
+
+**Known gaps in the contract:** `Citation` has a label and URL but no exact quote and no "assumed" flag. For now, quotes go in the research doc and assumptions are labeled "Assumption:" in the citation label.
 
 ## Out of scope
 
@@ -70,10 +83,9 @@ Other cities (until Newport is done), discretionary/hearing-based approvals, leg
 
 ## Open questions
 
-- Exact Newport ADU submittal checklist items, forms and fee schedule (with URLs).
 - Which departments sign off on a Newport ADU (Planning, Building, Public Works, Fire, utilities?).
 - Source for the "over 90% deemed incomplete" claim. If none is found, label it as an assumption.
-- Data model for rules (requirement → check → citation), and where it lives (`src/data/` JSON vs. TS).
+- Should `Citation` get `quote` and `assumed` fields? (Needs the teammate who owns `src/lib/adu/types.ts`.)
 - Who owns each workstream.
 
 _Last updated: 2026-11-07_

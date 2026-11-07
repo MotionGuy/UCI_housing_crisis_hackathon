@@ -18,7 +18,8 @@ Source of truth: `docs/lane-brief.md`. Condensed brief: `docs/project-context.md
 3. Priorities: correction-prevention checks first. Cut order when short on time: AI chat → fee details → visual polish. Research is time-boxed to about 20 minutes per task. Feature freeze about 1 hour before the deadline.
 4. When briefing any other subagent, include a 2–3 line summary of the mission, which workstream the task serves, and the hard rules that apply.
 5. Before opening a PR, or when unsure if work is in scope, ask the `project-context` subagent for an alignment check.
-6. After the lane brief or a spec in `.plans/` changes, ask `project-context` to refresh `docs/project-context.md`.
+6. Build on the existing rules engine in `src/lib/adu/` and the research in `docs/clear-it-newport.md`; never write a second engine or set of types. The contract is `src/lib/adu/types.ts`. Don't change it directly; propose changes through `project-context`. Ownership: `rules-checks` writes the checks and city/state data in `src/lib/adu/`; `app-builder` writes the UI in `src/app/` and `src/components/`; `pitch-storyline` writes `docs/pitch.md` and `docs/slides/`.
+7. After the lane brief or a spec in `.plans/` changes, ask `project-context` to refresh `docs/project-context.md`.
 
 ## Team rules
 
