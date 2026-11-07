@@ -9,7 +9,9 @@ import {
   ExternalLink,
   FileText,
   Info,
+  ListOrdered,
   LoaderCircle,
+  MapPin,
   PencilLine,
   ShieldCheck,
   TriangleAlert,
@@ -17,6 +19,8 @@ import {
 } from "lucide-react";
 import { evaluateAdu } from "@/lib/adu/evaluate";
 import { CITY } from "@/lib/adu/newport-beach";
+import { evaluateParcel } from "@/lib/adu/zoning";
+import { ParcelCard } from "./parcel-card";
 import type { AduAnswers, Check, CheckStatus } from "@/lib/adu/types";
 import { fillAllForms } from "@/lib/forms/fill";
 import type { FilledForm, Profile } from "@/lib/forms/types";
@@ -27,12 +31,17 @@ const FILLED_DOC_NAMES = new Set([CITY.documents.buildingPermit.name, CITY.docum
 
 export function AduResultsView({ answers, profile, onEdit }: { answers: AduAnswers; profile: Profile; onEdit: () => void }) {
   const result = useMemo(() => evaluateAdu(answers), [answers]);
+  const parcelEval = useMemo(
+    () => (profile.parcel ? evaluateParcel(profile.parcel, answers.aduType) : null),
+    [profile.parcel, answers.aduType],
+  );
+  const notAllowed = parcelEval?.eligibility === "not-allowed";
   const [forms, setForms] = useState<FilledForm[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const outOfScope = result.verdict === "out-of-scope";
 
   useEffect(() => {
-    if (outOfScope) return;
+    if (outOfScope || notAllowed) return;
     let cancelled = false;
     fillAllForms(answers, profile)
       .then((f) => !cancelled && setForms(f))
@@ -40,29 +49,56 @@ export function AduResultsView({ answers, profile, onEdit }: { answers: AduAnswe
     return () => {
       cancelled = true;
     };
-  }, [answers, profile, outOfScope]);
+  }, [answers, profile, outOfScope, notAllowed]);
 
-  const hero: { icon: LucideIcon; tone: string } =
-    result.verdict === "fast-path"
+  const hero: { icon: LucideIcon; tone: string } = notAllowed
+    ? { icon: CircleX, tone: "text-red-400" }
+    : result.verdict === "fast-path"
       ? { icon: ShieldCheck, tone: "text-accent" }
       : result.verdict === "needs-changes"
         ? { icon: TriangleAlert, tone: "text-amber-400" }
         : { icon: CircleX, tone: "text-neutral-300" };
 
-  const toGather = result.documents.filter((d) => !FILLED_DOC_NAMES.has(d.name));
+  // With a GIS lookup, the parcel rules replace the engine's generic "coastal" check.
+  const checks = parcelEval
+    ? [...parcelEval.checks, ...result.checks.filter((c) => c.id !== "coastal")]
+    : result.checks;
+  const toGather = [...result.documents.filter((d) => !FILLED_DOC_NAMES.has(d.name)), ...(parcelEval?.documents ?? [])];
+  const permits = parcelEval?.permits.length ? parcelEval.permits : result.permits;
+  const blocker = parcelEval?.checks.find((c) => c.status === "fail");
 
   return (
     <StepCard
       step={0}
       total={0}
       icon={hero.icon}
-      title={result.headline}
-      subtitle={result.summary}
+      title={notAllowed ? "An ADU isn't allowed on this lot" : result.headline}
+      subtitle={notAllowed ? blocker?.detail : result.summary}
       onBack={onEdit}
       wide
     >
       {outOfScope ? null : (
         <div className="space-y-9">
+          {profile.parcel && (
+            <Section title="Your property" icon={MapPin}>
+              <ParcelCard parcel={profile.parcel} />
+            </Section>
+          )}
+
+          {!notAllowed && permits.length > 0 && (
+            <Section title="Permits you need, in order" icon={ListOrdered}>
+              <ol className="space-y-2">
+                {permits.map((pm, i) => (
+                  <li key={pm} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-3.5 text-[15px] text-white">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent/15 text-xs font-semibold text-accent">{i + 1}</span>
+                    {pm}
+                  </li>
+                ))}
+              </ol>
+            </Section>
+          )}
+
+          {!notAllowed && (
           <Section title="Your forms, filled in" icon={FileText}>
             {error ? (
               <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>
@@ -91,15 +127,17 @@ export function AduResultsView({ answers, profile, onEdit }: { answers: AduAnswe
             )}
             <p className="mt-3 text-xs text-neutral-500">Check every value, then sign where the form asks for a signature.</p>
           </Section>
+          )}
 
           <Section title="Rule check" icon={CircleCheck}>
             <ul className="space-y-2">
-              {result.checks.map((c) => (
+              {checks.map((c) => (
                 <CheckRow key={c.id} check={c} />
               ))}
             </ul>
           </Section>
 
+          {!notAllowed && (<>
           <Section title="Still to gather" icon={CircleAlert}>
             <ul className="space-y-2">
               {toGather.map((d) => (
@@ -148,7 +186,7 @@ export function AduResultsView({ answers, profile, onEdit }: { answers: AduAnswe
 
           <Section title="Next steps" icon={PencilLine}>
             <ol className="space-y-3">
-              {result.steps.map((s, i) => (
+              {(profile.parcel ? result.steps.slice(1) : result.steps).map((s, i) => (
                 <li key={s} className="flex gap-3 text-[14.5px] leading-snug text-neutral-300">
                   <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white">{i + 1}</span>
                   {s}
@@ -164,6 +202,7 @@ export function AduResultsView({ answers, profile, onEdit }: { answers: AduAnswe
               ))}
             </ul>
           </Section>
+          </>)}
         </div>
       )}
     </StepCard>

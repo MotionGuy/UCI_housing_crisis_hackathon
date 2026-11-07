@@ -135,6 +135,58 @@ Local copies of every form, with what each one is: [forms/newport-beach/](forms/
    - Utility fees vary. The [OC ADU calculator](https://occog.aducalculator.org) estimates the total.
 7. **Review:** 10–20 days per round, and most projects need 2–3 rounds. Permitting takes 1–6 months; the whole project usually 12–18 months.
 
+## Permits by zone and location
+
+Checked November 7, 2026, in the current municipal code on [ecode360](https://ecode360.com/50137802) (Title 20) and [ecode360](https://ecode360.com/50143808) (Title 21, Coastal). The app looks these facts up from the address (see "Address lookup" below).
+
+### Zoning district
+
+| Zone (GIS code) | ADU allowed? | Permit | Source |
+|---|---|---|---|
+| Residential: `R-A`, `R-1`, `R-1-6000`, `R-1-7200`, `R-1-10000`, `R-BI`, `R-2`, `R-2-6000`, `RM`, `RM-6000`, `RMD` | Yes | Building permit only, ministerial, decided within 60 days of a complete application | NBMC § 20.48.200(C): "Accessory dwelling units and junior accessory dwelling units shall be approved in any residential or mixed-use zoning district, subject to issuance of a building permit" … "considered and approved ministerially, without discretionary review or a hearing, within sixty (60) days" |
+| Mixed use: `MU-V`, `MU-MM`, `MU-DW`, `MU-CV/15TH ST`, `MU-W1`, `MU-W2` | Yes | Same | § 20.48.200(C) |
+| Planned community `PC`, specific plan `SP-7` | Yes, where the plan designates residential use | Same; setbacks and height come from the PC text | § 20.48.200(A): "in areas designated for residential use, including as part of a planned community development plan or specific plan" |
+| Commercial, office, industrial, open space, public (`CC`, `CG`, `CM`, `CN`, `CV`, `OA`, `OG`, `OM`, `OR`, `OS`, `PF`, `PI`, `PR`, `IG`) | No | ADU fast path doesn't apply | § 20.48.200(A), (C) |
+
+**The zone doesn't add a different permit.** In every zone that allows ADUs, the approval is the same: a building permit through plan check. What adds permits and documents is the lot's **location** (Coastal Zone, overlays, hazards), below.
+
+The current code also confirms (§ 20.48.200(I), Ord. 2025-20): "Prior to the issuance of a building and/or grading permit for a **junior** accessory dwelling unit, the property owner shall record a deed restriction". **No deed restriction for regular ADUs.**
+
+### Coastal Zone
+
+| Where the lot is (GIS `APPEAL_AREA`) | Coastal permit | Source |
+|---|---|---|
+| Not in the Coastal Zone | None | — |
+| Coastal Zone, `NO` (not appealable) | City Coastal Development Permit (CDP) first. The Director may waive it as **de minimis** | NBMC § 21.52.035(C)(1); § 21.52.055 |
+| Coastal Zone, `YES` (appeal area) | City CDP first; the decision can be appealed to the Coastal Commission; **no de minimis waiver** | § 21.52.055(B)(1): waiver only if "not located within an appeal area and not within an area where the Coastal Commission retains permit jurisdiction" |
+| `PERMIT JURISDICTION` | City **Approval in Concept**, then a CDP **from the Coastal Commission** | § 21.52.015(B)(1) and (1)(a): "All development in areas where the Coastal Commission retains coastal development permit authority shall require conceptual approval from the City prior to application to the Coastal Commission." |
+| `PARCEL BISECTED - SEE MAP LAYER` | Ask a planner which side applies | GIS |
+
+**Why coastal ADUs need a CDP:** the exemption for improvements to existing single-unit homes covers garages, pools, fences and sheds, "but not including guest houses or self-contained residential units" (§ 21.52.035(C)(1)). An ADU is a self-contained residential unit. Assumption: this also covers JADUs; confirm with a planner.
+
+**Hearings:** the city's code requires a public hearing on non-exempt CDPs (§ 21.52.015(D)(1)). State law says local governments are **not required to hold public hearings for coastal development permit applications for ADUs** (Gov. Code § 66329, as summarized by the Coastal Commission's [SB 1077 summary](https://documents.coastal.ca.gov/assets/SB1077/Summary%20of%20State%20ADU%20Law%20and%20the%20Coastal%20Act%20for%20SB%201077%20Public%20Input.pdf); statute text not read because leginfo blocks automated requests).
+
+### Overlays and hazards (extra documents)
+
+| GIS flag | Adds | Source |
+|---|---|---|
+| Bluff (`B`) or canyon (`C`) overlay, in the Coastal Zone | Geologic Stability Report; Post Development Erosion Control Plan | CDP handout, supplemental materials table |
+| Special Flood Hazard (VE) overlay | Coastal Hazards Report | CDP handout |
+| `OthFireDesig = Special Fire Protection Area` | Fuel modification plan | Requirements for Submittal (9-2014), Fire item 1 |
+| Liquefaction or landslide risk | Soils (geotechnical) report, likely. **Assumption** that these zones trigger City Policy CBC 1803.5 | Plan Check Submittal Checklist (Nov 2025) |
+| Coastal Zone, new construction | Preliminary Construction Pollution Prevention Plan (CPPP) | CDP handout |
+| `InWaterQualityZone = YES`, coastal, new construction | WQHP/WQMP maybe (near coastal waters with 2,500+ sq ft impervious area, or other triggers) | CDP handout |
+| `PermitJurAgency` other than the City (County of Orange; State HCD for mobile home parks) | Not a city permit; out of scope | GIS |
+
+### Address lookup (how the app gets these facts)
+
+Newport Beach runs a public ArcGIS server at `https://nbgis.newportbeachca.gov/arcgis/rest/services`:
+- `CSSLocator/GeocodeServer`: turns an address into a point.
+- `CNB_Zoning/MapServer/0` (Lot Information): `PARCEL_NO` (APN), `ZONING_UPDATE` (zoning district), `ZONING_DESCRIPTION`, `GENERIC_LANDUSE`, `COASTAL_ZONE`, `APPEAL_AREA`, `PermitJurAgency`, `HEIGHT_ZONE`, `OVERLAY`, `IP_OVERLAY`, `LiquefactionRisk`, `LandslideRisk`, `OthFireDesig`, `InWaterQualityZone`.
+- `CNB_Zoning/MapServer/18`: Special Flood Hazard (VE) overlay.
+
+The map is a guide, not a legal determination. The results page links to it as the source.
+
 ## Sources
 
 - [Newport Beach ADU: Permit](https://www.newportbeachadu.org/permit)
