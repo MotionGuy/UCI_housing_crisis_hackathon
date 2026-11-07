@@ -1,4 +1,4 @@
-import { AduWizard } from "@/components/wizard/adu-wizard";
+import { HomeShell } from "@/components/home-shell";
 
 export default function Home() {
   return (
@@ -6,7 +6,7 @@ export default function Home() {
       <p className="mb-6 text-xs font-medium tracking-[0.2em] text-neutral-500 uppercase">
         Clear It · Newport Beach ADU permits
       </p>
-      <AduWizard />
+      <HomeShell />
       <p className="mt-8 max-w-md text-center text-xs leading-relaxed text-neutral-600">
         This tool is not legal advice. Rules checked November 7, 2026. Confirm all requirements with
         the City of Newport Beach (Planning Division, (949) 644-3204) before you submit.
