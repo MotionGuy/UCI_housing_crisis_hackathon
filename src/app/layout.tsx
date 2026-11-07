@@ -5,9 +5,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Clear it: Newport Beach ADU permits",
+  title: "Clear It",
   description:
-    "Check if your ADU qualifies for Newport Beach's fast path, and get your permit forms filled out.",
+    "Get your Newport Beach ADU permit application right the first time.",
 };
 
 export default function RootLayout({

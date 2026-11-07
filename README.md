@@ -1,28 +1,37 @@
-# UCI Impact Lab: Affordable Homeownership
+# Clear It: UCI Impact Lab housing hackathon
 
 Our team's project for the **AI Impact Lab on affordable homeownership** at **UC Irvine** (one Saturday).
 
 > Local non-profits in affordable housing for low-income families face many challenges. This Impact Lab puts AI to work on the technical challenges that stand in the way. Teams prototype a scalable, repeatable solution that makes owning a home financially sustainable.
 
-## Our project: Clear it
+## The problem
 
-**TurboTax for ADU permits in Newport Beach.**
+In Orange County, a faster path to building housing already exists on paper: ministerial approval. If a project meets the written rules and uses state-approved plans, the city must approve it, with no hearing. In practice almost nobody uses this path. Each of OC's 34 cities has its own forms, fees and checklists, cities often misread state law, and most applications come back incomplete or need several rounds of corrections.
 
-California law gives accessory dwelling units (ADUs) a fast path: if an ADU meets the written rules, the city **must** approve the building permit without a hearing. But each of Orange County's 34 cities has its own forms, fees and checklists, and the state regularly tells cities they've read the law wrongly. Homeowners can't tell if they qualify or what to submit, so the fast path stays rare.
+**Our question:** how do we make the fast path easy enough that it becomes the normal path?
 
-Clear it asks a homeowner a few plain questions, then:
+## Our idea: Clear It
 
-1. Checks the ADU against Newport Beach's rules and state law, citing each rule.
-2. **Fills out the city's permit forms** (building permit application, and the Coastal Development Permit affidavit when needed) as downloadable PDFs.
-3. Lists what's still needed, the fees, the next steps, and the homeowner's rights under state law, including where the city's own pages contradict the law.
+**TurboTax for ADU permits**, starting with **Newport Beach**. Newport's ADU guidebook says applications typically need 2 to 3 review rounds of 10 to 20 business days each. Clear It aims to move the typical project to **one review cycle**.
 
-Research and sources: [docs/clear-it-newport.md](docs/clear-it-newport.md). Every city form, with what each one is: [docs/forms/newport-beach/](docs/forms/newport-beach/README.md).
+The applicant answers step-by-step questions about their lot and project. The app then shows:
+
+- **Forms needed**
+- **Departments that must sign off**
+- **Fees that apply**
+- **Issues likely to trigger a correction letter**, each with a plain-English fix
+- **Ready-to-submit status**
+- **The city's forms, filled in:** the building permit application and, for coastal lots, the Coastal Development Permit owner's affidavit, as downloadable PDFs
+
+Pass/fail comes from written rules based on Newport's ADU submittal checklist and state ADU law (Gov. Code §§ 66310–66342). Every rule cites its source. The AI helps with intake, explanations and reading uploaded documents, but it doesn't make the pass/fail decision. This is not legal advice.
+
+Full context: [`docs/lane-brief.md`](docs/lane-brief.md) (source of truth) and [`docs/project-context.md`](docs/project-context.md) (summary). Implementation specs go in [`.plans/`](.plans/); to write one, run `/jmo-workflow:interview` in Claude Code.
 
 ## Tech stack
 
 - [Next.js 16](https://nextjs.org/) (App Router) + TypeScript
 - Tailwind CSS v4
-- API routes in `src/app/api/*` for the AI, listings, jobs and maps calls
+- API routes in `src/app/api/*` for the rules checks and AI calls
 
 ## Getting started
 
@@ -45,37 +54,41 @@ Open http://localhost:3000.
 | `npm run start` | Runs the production build |
 | `npm run lint` | Runs ESLint |
 | `npm run typecheck` | Runs the TypeScript compiler without output |
-| `npm run forms:sample` | Fills the city forms with sample data into `sample-forms/` |
+| `npm run forms:sample` | Fills the city forms with made-up sample data into `sample-forms/` |
 
 ## Project structure
 
 ```
 src/
-  app/page.tsx               Home page: the ADU wizard
+  app/
+    page.tsx                 Home page: the ADU intake wizard
+    layout.tsx               Root layout
+    globals.css              Tailwind entry point
+    api/
+      adu/check/route.ts     POST: ADU answers -> fast-path verdict, checks, documents, fees
   components/wizard/
-    adu-wizard.tsx           The 7 interview steps
-    results.tsx              Verdict, filled-form downloads, checklist, fees, rights
+    adu-wizard.tsx           The 7 intake steps
+    results.tsx              Verdict, filled-form downloads, checks, documents, fees, rights
     ui.tsx                   Card, option rows, inputs (dark design)
-  lib/adu/
-    types.ts                 Interview answers and results
-    state-law.ts             California ADU law limits, with citations
-    newport-beach.ts         Newport Beach rules, documents, fees, links
-    evaluate.ts              Answers in, verdict and checklist out
-  lib/forms/
-    fill.ts                  Fills the city's PDF forms (pdf-lib), field map included
-    types.ts                 Owner, applicant, designer, contractor
-  app/api/adu/check/route.ts POST: run the rule check from another client
-public/forms/newport-beach/  Blank fillable forms the app fills in
-docs/
-  clear-it-newport.md        Research: rules, HCD findings, how to submit
-  forms/newport-beach/       Every city form, examples, reference PDFs
+      housing/route.ts       GET: homes from the housing research agent (or sample data)
+  data/
+    listings.json            Homes found by the housing research agent
+  lib/
+    adu/                     Clear It rules engine (types, Newport data, state law, evaluate)
+    forms/                   Fills the city's PDF forms with pdf-lib (field map in fill.ts)
+    types.ts, sample-data.ts Listing types and samples for the housing agent
+public/forms/newport-beach/  Blank fillable city forms that the app fills in
 scripts/
-  fill-sample-forms.ts       npm run forms:sample: fills the forms with sample data
-  research-housing.ts        Earlier idea: housing research agent (not used by Clear it)
+  fill-sample-forms.ts       npm run forms:sample: fills the forms with made-up sample data
+  research-housing.ts        Housing research agent (Claude + web search)
+docs/
+  lane-brief.md              Original project context (source of truth)
+  project-context.md         Shared brief for the team and Claude agents
+  clear-it-newport.md        Newport Beach ADU research (state law, city rules, HCD findings, fees)
+  forms/newport-beach/       City forms and reference PDFs, with an index
+.claude/agents/              Project subagents (project-context, rules-checks, app-builder, pitch-storyline)
+.plans/                      Specs written by /jmo-workflow:interview
 ```
-
-The `api/housing`, `api/jobs`, `api/commute` routes and `lib/affordability.ts` are from our earlier idea and aren't used by Clear it. Delete them if nobody needs them.
-
 
 ## Housing research agent
 
@@ -101,7 +114,7 @@ The agent only records homes from pages it opened, but always check the source l
 
 ## How we work together
 
-- **One owner per area.** Split the work by layer (housing, affordability, jobs, commute, UI) so that people do not edit the same files.
+- **One owner per area.** Split the work by workstream (requirements, checks, app, pitch) so that people do not edit the same files.
 - **Small PRs, often.** Branch from `main`, open a PR early, and merge after one teammate approves. See [CONTRIBUTING.md](CONTRIBUTING.md).
 - **Issues are the task board.** Each piece of work is an issue. Assign it to yourself before you start.
 - **`main` always runs.** Do not merge a PR that breaks `npm run build`.

@@ -17,8 +17,8 @@ This is a one-day hackathon. These rules exist to keep `main` working and to sto
 
   | Prefix | Use for |
   | --- | --- |
-  | `feat/` | New features (`feat/job-matching`) |
-  | `fix/` | Bug fixes (`fix/commute-units`) |
+  | `feat/` | New features (`feat/intake-steps`) |
+  | `fix/` | Bug fixes (`fix/setback-check`) |
   | `ui/` | Styling and layout (`ui/results-cards`) |
   | `docs/` | README, specs, notes |
   | `chore/` | Config, dependencies, tooling |
@@ -26,7 +26,7 @@ This is a one-day hackathon. These rules exist to keep `main` working and to sto
 ## Commits
 
 - Commit small and often.
-- Write the message in the imperative: `Add affordability API route`, not `added stuff`.
+- Write the message in the imperative: `Add setback check for detached ADUs`, not `added stuff`.
 
 ## Pull requests
 
@@ -67,10 +67,10 @@ If you are not sure how to fix a conflict, ask the person who owns that file.
 
 - Use the **Feature** or **Bug** template.
 - Assign the issue to yourself before you start, so that two people do not do the same work.
-- Use labels for the area: `housing`, `affordability`, `jobs`, `commute`, `ui`.
+- Use labels for the workstream: `requirements`, `checks`, `app`, `pitch`.
 
 ## Secrets and data
 
 - Never commit API keys. Put them in `.env.local`, which git ignores.
 - When you add a new environment variable, add its name (no value) to `.env.example`.
-- Do not commit real personal data about families. Use made-up sample data.
+- Do not commit real applicant data (names, addresses, plans). Use made-up sample applications.
