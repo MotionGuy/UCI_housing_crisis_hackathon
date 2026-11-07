@@ -113,6 +113,7 @@ export function AduWizard() {
           subtitle="We'll use this on every form. Find your zoning in the city's Address Search Tool."
           onContinue={next}
           continueDisabled={!a.address.trim()}
+          missingHint="Add the property address to continue."
         >
           <div className="space-y-4">
             <TextField label="Property address" required autoComplete="street-address" placeholder="123 Example St, Newport Beach, CA 92663" value={a.address} onChange={(v) => setAnswer("address", v)} />
@@ -170,7 +171,7 @@ export function AduWizard() {
 
     case 4:
       return (
-        <StepCard {...common} icon={Ruler} title="Size it up" subtitle="Rough numbers are fine. Your designer will confirm them." onContinue={next} continueDisabled={!(a.squareFeet > 0)}>
+        <StepCard {...common} icon={Ruler} title="Size it up" subtitle="Rough numbers are fine. Your designer will confirm them." onContinue={next} continueDisabled={!(a.squareFeet > 0)} missingHint="Add the size in square feet to continue.">
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <TextField label="Size (sq ft)" type="number" inputMode="numeric" value={a.squareFeet || ""} onChange={(v) => setAnswer("squareFeet", Number(v))} />
@@ -196,9 +197,22 @@ export function AduWizard() {
 
     case 5: {
       const o = p.owner;
-      const ok = o.firstName.trim() && o.lastName.trim() && (o.email.trim() || o.phone.trim());
+      const missing = [
+        !o.firstName.trim() && "first name",
+        !o.lastName.trim() && "last name",
+        !o.email.trim() && !o.phone.trim() && "an email or phone",
+      ].filter(Boolean) as string[];
+      const missingHint = missing.length ? `Add ${listWords(missing)} to continue.` : undefined;
       return (
-        <StepCard {...common} icon={UserRound} title="Tell us about you" subtitle="The property owner, as it appears on the deed." onContinue={next} continueDisabled={!ok}>
+        <StepCard
+          {...common}
+          icon={UserRound}
+          title="Tell us about you"
+          subtitle="The property owner, as it appears on the deed."
+          onContinue={next}
+          continueDisabled={missing.length > 0}
+          missingHint={missingHint}
+        >
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField label="First name" required autoComplete="given-name" value={o.firstName} onChange={(v) => setOwner("firstName", v)} />
             <TextField label="Last name" required autoComplete="family-name" value={o.lastName} onChange={(v) => setOwner("lastName", v)} />
@@ -272,4 +286,9 @@ export function AduWizard() {
       );
     }
   }
+}
+
+/** ["a", "b", "c"] -> "a, b and c" */
+function listWords(words: string[]): string {
+  return words.length < 2 ? words.join("") : `${words.slice(0, -1).join(", ")} and ${words.at(-1)}`;
 }

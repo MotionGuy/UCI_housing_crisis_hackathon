@@ -15,6 +15,7 @@ export function StepCard({
   onContinue,
   continueLabel = "Continue",
   continueDisabled,
+  missingHint,
   wide,
 }: {
   step: number;
@@ -28,6 +29,8 @@ export function StepCard({
   onContinue?: () => void;
   continueLabel?: string;
   continueDisabled?: boolean;
+  /** Shown under the buttons while Continue is disabled, e.g. "Add your last name". */
+  missingHint?: string;
   wide?: boolean;
 }) {
   return (
@@ -78,6 +81,11 @@ export function StepCard({
             )}
           </div>
         </div>
+        {continueDisabled && missingHint && (
+          <p className="mt-3 text-right text-[13px] text-amber-300/90" aria-live="polite">
+            {missingHint}
+          </p>
+        )}
       </div>
     </section>
   );
