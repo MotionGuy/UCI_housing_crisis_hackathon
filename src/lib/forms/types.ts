@@ -1,3 +1,5 @@
+import type { ParcelInfo } from "@/lib/parcel/types";
+
 export interface Person {
   firstName: string;
   lastName: string;
@@ -29,6 +31,8 @@ export interface Profile {
   valuation: number;
   designer: Professional;
   contractor: Professional;
+  /** Facts from the city's GIS, when the address lookup worked. */
+  parcel?: ParcelInfo;
 }
 
 export const EMPTY_PERSON: Person = {
