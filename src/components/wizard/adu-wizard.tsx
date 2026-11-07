@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CircleHelp,
   DoorOpen,
@@ -22,6 +22,7 @@ import { demoAnswers, demoProfile, fixedAnswers } from "@/lib/adu/demo-applicati
 import { CITY } from "@/lib/adu/newport-beach";
 import { EMPTY_PERSON, EMPTY_PRO, type Person, type Profile } from "@/lib/forms/types";
 import { AduResultsView } from "./results";
+import { ReviewView, SubmitView } from "./review";
 import { OptionList, Segmented, StepCard, TextField, Toggle, linkClass, type Option } from "./ui";
 
 const STEP_COUNT = 7;
@@ -74,8 +75,13 @@ export function AduWizard() {
   const [step, setStep] = useState(0);
   const [a, setA] = useState<AduAnswers>(INITIAL_ANSWERS);
   const [p, setP] = useState<Profile>(INITIAL_PROFILE);
-  const [done, setDone] = useState(false);
+  const [view, setView] = useState<"intake" | "results" | "review" | "submit">("intake");
+  /** Set when a step was opened from the review screen; Continue goes back there. */
+  const [returnToReview, setReturnToReview] = useState(false);
   const [demoLoaded, setDemoLoaded] = useState(false);
+
+  // The $300/sq ft valuation is an estimate (no city source); the review screen labels it.
+  const formProfile = useMemo(() => ({ ...p, valuation: p.valuation || a.squareFeet * 300 }), [p, a.squareFeet]);
 
   const setAnswer = <K extends keyof AduAnswers>(k: K, v: AduAnswers[K]) => setA((prev) => ({ ...prev, [k]: v }));
   const setProfile = <K extends keyof Profile>(k: K, v: Profile[K]) => setP((prev) => ({ ...prev, [k]: v }));
@@ -88,7 +94,16 @@ export function AduWizard() {
     setDemoLoaded(true);
   };
 
-  const next = () => (step + 1 < STEP_COUNT ? setStep(step + 1) : setDone(true));
+  const next = () => {
+    if (returnToReview) {
+      setReturnToReview(false);
+      setView("review");
+    } else if (step + 1 < STEP_COUNT) {
+      setStep(step + 1);
+    } else {
+      setView("results");
+    }
+  };
   const back = step > 0 ? () => setStep(step - 1) : undefined;
   const pick =
     <K extends keyof AduAnswers>(k: K) =>
@@ -97,18 +112,38 @@ export function AduWizard() {
       next();
     };
 
-  if (done) {
+  if (view === "results") {
     return (
       <AduResultsView
         answers={a}
-        profile={{ ...p, valuation: p.valuation || a.squareFeet * 300 }}
+        profile={formProfile}
         onLoadFixed={demoLoaded ? () => setA(fixedAnswers) : undefined}
+        onReview={() => setView("review")}
         onEdit={() => {
-          setDone(false);
+          setView("intake");
           setStep(0);
         }}
       />
     );
+  }
+  if (view === "review") {
+    return (
+      <ReviewView
+        answers={a}
+        profile={formProfile}
+        valuationEstimated={!p.valuation}
+        onBack={() => setView("results")}
+        onEditStep={(s) => {
+          setStep(s);
+          setReturnToReview(true);
+          setView("intake");
+        }}
+        onSubmit={() => setView("submit")}
+      />
+    );
+  }
+  if (view === "submit") {
+    return <SubmitView answers={a} profile={formProfile} onBack={() => setView("review")} />;
   }
 
   const isNew = a.aduType === "detached" || a.aduType === "attached";

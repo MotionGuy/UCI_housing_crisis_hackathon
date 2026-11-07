@@ -1,16 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   CircleAlert,
   CircleCheck,
   CircleX,
-  Download,
   Landmark,
   ExternalLink,
   FileText,
   Info,
-  LoaderCircle,
   PencilLine,
   ShieldCheck,
   TriangleAlert,
@@ -19,8 +17,8 @@ import {
 import { evaluateAdu } from "@/lib/adu/evaluate";
 import { CITY } from "@/lib/adu/newport-beach";
 import type { AduAnswers, AduResult, Check, CheckStatus } from "@/lib/adu/types";
-import { fillAllForms } from "@/lib/forms/fill";
-import type { FilledForm, Profile } from "@/lib/forms/types";
+import type { Profile } from "@/lib/forms/types";
+import { autofillPreview } from "./review";
 import { StepCard, linkClass } from "./ui";
 
 // Documents we fill in automatically; everything else goes in "still to gather".
@@ -30,29 +28,20 @@ export function AduResultsView({
   answers,
   profile,
   onEdit,
+  onReview,
   onLoadFixed,
 }: {
   answers: AduAnswers;
   profile: Profile;
   onEdit: () => void;
+  /** Goes to the review screen; blocked while any check fails. */
+  onReview?: () => void;
   /** Shown after the demo is loaded: swaps in the fixed demo application. */
   onLoadFixed?: () => void;
 }) {
   const result = useMemo(() => evaluateAdu(answers), [answers]);
-  const [forms, setForms] = useState<FilledForm[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const outOfScope = result.verdict === "out-of-scope";
-
-  useEffect(() => {
-    if (outOfScope) return;
-    let cancelled = false;
-    fillAllForms(answers, profile)
-      .then((f) => !cancelled && setForms(f))
-      .catch((e: unknown) => !cancelled && setError(e instanceof Error ? e.message : "Could not fill the forms"));
-    return () => {
-      cancelled = true;
-    };
-  }, [answers, profile, outOfScope]);
+  const forms = useMemo(() => autofillPreview(answers, profile, false), [answers, profile]);
 
   const hero: { icon: LucideIcon; tone: string } =
     result.verdict === "fast-path"
@@ -75,6 +64,10 @@ export function AduResultsView({
       title={result.headline}
       subtitle={result.summary}
       onBack={onEdit}
+      onContinue={outOfScope ? undefined : onReview}
+      continueLabel="Review and submit"
+      continueDisabled={fails.length > 0}
+      missingHint={`Fix these first: change the ${fails.length} ${fails.length === 1 ? "item" : "items"} marked in red, then review your forms.`}
       wide
     >
       {outOfScope ? null : (
@@ -96,7 +89,7 @@ export function AduResultsView({
           </div>
 
           {(fails.length > 0 || warns.length > 0 || conflicts.length > 0) && (
-            <Section title={fails.length ? `Fix these first (${fails.length + warns.length})` : `Check these (${warns.length})`} icon={TriangleAlert}>
+            <Section title={fails.length ? `Fix these first (${fails.length + warns.length})` : `Check these (${warns.length + conflicts.length})`} icon={TriangleAlert}>
               <ul className="space-y-2">
                 {[...fails, ...warns].map((c) => (
                   <CheckRow key={c.id} check={c} />
@@ -132,33 +125,19 @@ export function AduResultsView({
             </Section>
           )}
 
-          <Section title="Your forms, filled in" icon={FileText}>
-            {error ? (
-              <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>
-            ) : !forms ? (
-              <p className="flex items-center gap-2 text-sm text-neutral-400">
-                <LoaderCircle className="size-4 animate-spin" /> Filling your forms…
-              </p>
-            ) : (
-              <ul className="space-y-2">
-                {forms.map((f) => (
-                  <li key={f.id} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-3">
-                    <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent/12">
-                      <FileText className="size-5 text-accent" />
-                    </span>
-                    <span className="min-w-0 flex-1 text-[15px] text-white">{f.title}</span>
-                    <button
-                      type="button"
-                      onClick={() => download(f)}
-                      className="flex h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-semibold text-black transition hover:brightness-110 active:scale-[0.97]"
-                    >
-                      <Download className="size-4" strokeWidth={2.4} /> PDF
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="mt-3 text-xs text-neutral-500">Check every value, then sign where the form asks for a signature.</p>
+          <Section title="Forms we fill in for you" icon={FileText}>
+            <ul className="space-y-2">
+              {forms.map((f) => (
+                <li key={f.id} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-3">
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent/12">
+                    <FileText className="size-5 text-accent" />
+                  </span>
+                  <span className="min-w-0 flex-1 text-[15px] text-white">{f.title}</span>
+                  <span className="shrink-0 text-xs text-neutral-500">{f.fields.length} fields</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3 text-xs text-neutral-500">Next you&apos;ll check every value we filled in, then download the forms to sign and file.</p>
           </Section>
 
           {otherChecks.length > 0 && (
@@ -322,13 +301,4 @@ export function CheckRow({ check }: { check: Check }) {
       </div>
     </li>
   );
-}
-
-function download(f: FilledForm) {
-  const url = URL.createObjectURL(new Blob([f.bytes as BlobPart], { type: "application/pdf" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = f.fileName;
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
