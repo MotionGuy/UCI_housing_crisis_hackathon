@@ -92,14 +92,17 @@ Plan check is a large share of a homeowner's ADU timeline, and the same rules en
 
 **Known gaps in the contracts:** `Citation` has no `quote` or "assumed" flag (use "Assumption:" in the label). `Check` has no separate `fix` field (fix text lives in `detail`). The guide's proposed `AduAnswers` additions (owners, applicant, professionals, valuation) **mostly already exist in `Profile`**; put people/form data in `Profile`, and only rule inputs in `AduAnswers`.
 
-## Decisions needed
+## Decisions
 
-1. **Merge PR #2 first**, then build demo/status work on top of it (recommended), or build in parallel and rebase.
-2. **Which building permit form** to fill: PR #2 fills the old worksheet (doc 15043, linked from the ADU permit page); the Building Division now lists a "Combo Building Permit Application" (doc 3258, modified 2025-05-06). Ask the Permit Center. Until confirmed, label the download as the form the ADU permit page links.
-3. **Ready-to-submit rule:** proposal = no `fail` and no `warn` checks (stricter than the engine's `fast-path`). Computed in the UI or in the engine?
-4. **Coastal "unsure":** PR #2 fills the CDP affidavit "just in case". Keep it, or show it only after the address lookup?
-5. **$300/sq ft valuation default** is labeled "city estimate" in the wizard but no source is in our docs: cite it or relabel it "Estimate".
-6. Who owns `src/lib/forms/` and `src/components/wizard/` after merge (recommended: teammate owns; `app-builder` may extend in place, no rewrites).
+**Made (2026-11-07):**
+- **PR #2 merged first.** Demo and status work builds on top of it.
+- **Review step before submit.** After the app checks the answers and autofills the forms, it shows a **review screen** with every autofilled value, grouped by form. The user checks each one, corrects anything wrong, and confirms before the final "submit" step. The app can't file with the city (Newport takes ADU permits in person or through CiViC), so "submit" means: confirm, then download the completed package with instructions for filing it. Failed checks still show as "Fix these first" before the review. Warnings stay visible on the review screen so the user sees them before confirming.
+- **Valuation default stays at $300/sq ft** (the team judges the figure reasonable). Until a city source is found, the label says **"Estimate"**, not "city estimate", so we follow the hard rule on numbers.
+
+**Still open:**
+1. **Which building permit form** to fill: PR #2 fills the old worksheet (doc 15043, linked from the ADU permit page); the Building Division now lists a "Combo Building Permit Application" (doc 3258, modified 2025-05-06). Ask the Permit Center. Until confirmed, label the download as the form the ADU permit page links.
+2. **Coastal "unsure":** PR #2 fills the CDP affidavit "just in case". Keep it, or show it only after the address lookup?
+3. Who owns `src/lib/forms/` and `src/components/wizard/` (recommended: teammate owns; `app-builder` may extend in place, no rewrites). Confirm with the teammate.
 
 ## Out of scope
 
