@@ -97,12 +97,12 @@ Plan check is a large share of a homeowner's ADU timeline, and the same rules en
 **Made (2026-11-07):**
 - **PR #2 merged first.** Demo and status work builds on top of it.
 - **Review step before submit.** After the app checks the answers and autofills the forms, it shows a **review screen** with every autofilled value, grouped by form. The user checks each one, corrects anything wrong, and confirms before the final "submit" step. The app can't file with the city (Newport takes ADU permits in person or through CiViC), so "submit" means: confirm, then download the completed package with instructions for filing it. Failed checks still show as "Fix these first" before the review. Warnings stay visible on the review screen so the user sees them before confirming.
+- **Building permit form is current.** The team's separate research confirmed that the worksheet the app fills (doc 15043, linked from the ADU permit page) is the right, up-to-date form. No form change needed. (Add the source link here when available.)
 - **Valuation default stays at $300/sq ft** (the team judges the figure reasonable). Until a city source is found, the label says **"Estimate"**, not "city estimate", so we follow the hard rule on numbers.
 
 **Still open:**
-1. **Which building permit form** to fill: PR #2 fills the old worksheet (doc 15043, linked from the ADU permit page); the Building Division now lists a "Combo Building Permit Application" (doc 3258, modified 2025-05-06). Ask the Permit Center. Until confirmed, label the download as the form the ADU permit page links.
-2. **Coastal "unsure":** PR #2 fills the CDP affidavit "just in case". Keep it, or show it only after the address lookup?
-3. Who owns `src/lib/forms/` and `src/components/wizard/` (recommended: teammate owns; `app-builder` may extend in place, no rewrites). Confirm with the teammate.
+1. **Coastal "unsure":** PR #2 fills the CDP affidavit "just in case". Keep it, or show it only after the address lookup?
+2. Who owns `src/lib/forms/` and `src/components/wizard/` (recommended: teammate owns; `app-builder` may extend in place, no rewrites). Confirm with the teammate.
 
 ## Out of scope
 

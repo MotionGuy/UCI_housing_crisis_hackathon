@@ -42,7 +42,7 @@ A teammate already built the rules engine and the research. **Extend it; never r
 1. **Correction-prevention checks first.** The engine already covers size, setbacks, height, parking, coastal zone, garage and owner checks (mostly whether the project is allowed). The gap is **what gets an application sent back**. Next, in order:
    - **Application-package checks** from `docs/adu-application-guide.md` § 1–2: missing documents, plan-set items, **coastal sequencing** (CDP before the building permit). Use only what `AduAnswers` can decide today; anything needing new inputs goes under "Contract change requests".
    - **Deed-restriction conflict as a check** (new id, e.g. `deed-restriction`, `warn`): today it's only a `DocumentItem.warning` plus a `rights` item, so it doesn't look like a flagged issue. Quote both city and state/HCD texts; "appears to".
-   - **Wrong-form risk:** the ADU permit page links the old "Worksheet for Combo Building & Solar Permit Application" (doc 15043, the one PR #2 fills); the Building Division lists a newer "Combo Building Permit Application" (doc 3258, modified 2025-05-06). Don't resolve it from memory; record it, and if useful add an `info`/`warn` telling the applicant to confirm the current form with the Permit Center.
+   - **Form version: resolved.** Team research confirmed the worksheet the app fills (doc 15043) is current. Don't add a wrong-form warning.
    Aim for the **8–12 checks most likely to cause a correction letter**, ranked, each tied to a requirement.
 2. **Then forms and departments.** Make `documents` and `permits` complete for each ADU type, using the forms index.
 3. **Then fees.** Ranges with a source are fine.
