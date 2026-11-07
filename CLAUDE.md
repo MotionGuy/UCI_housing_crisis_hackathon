@@ -4,7 +4,7 @@
 
 **"Clear It": TurboTax for ADU permits in Orange County, starting with Newport Beach.** An applicant-facing, step-by-step intake that tells homeowners and builders which forms, sign-offs and fees apply, and catches the problems that would trigger a correction letter (with plain-English fixes) **before they submit**. The goal: one review cycle instead of 2–3. Team of 4, about 4 hours.
 
-Source of truth: `docs/lane-brief.md`. Condensed brief: `docs/project-context.md`.
+Source of truth: `docs/lane-brief.md`. Condensed brief: `docs/project-context.md`. Research: `docs/clear-it-newport.md`; application package and form field maps: `docs/adu-application-guide.md`; pitch and demo script: `docs/pitch.md`.
 
 **Every agent and session must work within this context:**
 
@@ -18,7 +18,7 @@ Source of truth: `docs/lane-brief.md`. Condensed brief: `docs/project-context.md
 3. Priorities: correction-prevention checks first. Cut order when short on time: AI chat → fee details → visual polish. Research is time-boxed to about 20 minutes per task. Feature freeze about 1 hour before the deadline.
 4. When briefing any other subagent, include a 2–3 line summary of the mission, which workstream the task serves, and the hard rules that apply.
 5. Before opening a PR, or when unsure if work is in scope, ask the `project-context` subagent for an alignment check.
-6. Build on the existing rules engine in `src/lib/adu/` and the research in `docs/clear-it-newport.md`; never write a second engine or set of types. The contract is `src/lib/adu/types.ts`. Don't change it directly; propose changes through `project-context`. Ownership: `rules-checks` writes the checks and city/state data in `src/lib/adu/`; `app-builder` writes the UI in `src/app/` and `src/components/`; `pitch-storyline` writes `docs/pitch.md` and `docs/slides/`.
+6. Build on the existing rules engine in `src/lib/adu/` and the research in `docs/clear-it-newport.md`; never write a second engine or set of types. The contracts are `src/lib/adu/types.ts` (rule inputs/results) and `src/lib/forms/types.ts` (`Profile`: people and form data for the filled PDFs). Don't change them directly; propose changes through `project-context`. The intake wizard, results page and PDF form filling already exist (`src/components/wizard/`, `src/lib/forms/`, PR #2); extend them in place, don't rebuild them. Ownership: `rules-checks` writes the checks and city/state data in `src/lib/adu/`; `app-builder` writes the UI in `src/app/` and `src/components/` (small in-place changes to the teammate's wizard and form code, no rewrites); `pitch-storyline` writes `docs/pitch.md` and `docs/slides/`.
 7. After the lane brief or a spec in `.plans/` changes, ask `project-context` to refresh `docs/project-context.md`.
 
 ## Team rules
