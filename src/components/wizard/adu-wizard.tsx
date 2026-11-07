@@ -21,6 +21,8 @@ import type { AduAnswers, AduType, LotType, YesNoUnsure } from "@/lib/adu/types"
 import { demoAnswers, demoProfile, fixedAnswers } from "@/lib/adu/demo-application";
 import { CITY } from "@/lib/adu/newport-beach";
 import { EMPTY_PERSON, EMPTY_PRO, type Person, type Profile } from "@/lib/forms/types";
+import type { ParcelLookupResult } from "@/lib/parcel/types";
+import { ParcelCard } from "./parcel-card";
 import { AduResultsView } from "./results";
 import { ReviewView, SubmitView } from "./review";
 import { OptionList, Segmented, StepCard, TextField, Toggle, linkClass, type Option } from "./ui";
@@ -87,24 +89,57 @@ export function AduWizard() {
   const setProfile = <K extends keyof Profile>(k: K, v: Profile[K]) => setP((prev) => ({ ...prev, [k]: v }));
   const setOwner = (k: keyof Person, v: string) => setP((prev) => ({ ...prev, owner: { ...prev.owner, [k]: v } }));
 
-  /** Fills every answer from the demo application; the presenter then clicks Continue through. */
+  // "manual": the demo is loaded, so Continue skips the lookup and shows the zoning/APN fields.
+  const [lookup, setLookup] = useState<{ status: "idle" | "loading" | "found" | "error" | "manual"; message?: string }>({ status: "idle" });
+
+  /**
+   * Fills every answer from the demo application; the presenter then clicks Continue through.
+   * The demo is made-up data: it skips the address lookup, and setP(demoProfile) clears any parcel from an earlier lookup.
+   */
   const loadDemo = (answers: AduAnswers) => {
     setA(answers);
     setP(demoProfile);
+    setLookup({ status: "manual" });
     setDemoLoaded(true);
   };
 
+  // The Coastal Zone step (1) is skipped when the city's GIS already answered it.
+  const skipCoastal = !!p.parcel;
   const next = () => {
     if (returnToReview) {
       setReturnToReview(false);
       setView("review");
-    } else if (step + 1 < STEP_COUNT) {
-      setStep(step + 1);
-    } else {
-      setView("results");
+      return;
+    }
+    const to = step === 0 && skipCoastal ? 2 : step + 1;
+    if (to < STEP_COUNT) setStep(to);
+    else setView("results");
+  };
+  const back = step > 0 ? () => setStep(step === 2 && skipCoastal ? 0 : step - 1) : undefined;
+
+  const changeAddress = (v: string) => {
+    setAnswer("address", v);
+    if (lookup.status !== "idle") setLookup({ status: "idle" });
+    if (p.parcel) setProfile("parcel", undefined);
+  };
+
+  const findProperty = async () => {
+    setLookup({ status: "loading" });
+    try {
+      const res = (await (await fetch(`/api/parcel?address=${encodeURIComponent(a.address)}`)).json()) as ParcelLookupResult;
+      if (!res.ok) {
+        setLookup({ status: "error", message: res.message });
+        return;
+      }
+      const parcel = res.parcel;
+      setP((prev) => ({ ...prev, parcel, apn: parcel.apn || prev.apn, zoningDistrict: parcel.zoningDistrict || prev.zoningDistrict }));
+      setA((prev) => ({ ...prev, address: parcel.matchedAddress, coastalZone: parcel.coastalZone ? "yes" : "no" }));
+      setLookup({ status: "found" });
+    } catch {
+      setLookup({ status: "error", message: "The lookup didn't work. You can enter the details by hand." });
     }
   };
-  const back = step > 0 ? () => setStep(step - 1) : undefined;
+
   const pick =
     <K extends keyof AduAnswers>(k: K) =>
     (v: AduAnswers[K]) => {
@@ -117,7 +152,15 @@ export function AduWizard() {
       <AduResultsView
         answers={a}
         profile={formProfile}
-        onLoadFixed={demoLoaded ? () => setA(fixedAnswers) : undefined}
+        onLoadFixed={
+          demoLoaded
+            ? () => {
+                setA(fixedAnswers);
+                setProfile("parcel", undefined); // the demo address has no parcel
+                setLookup({ status: "manual" });
+              }
+            : undefined
+        }
         onReview={() => setView("review")}
         onEdit={() => {
           setView("intake");
@@ -150,20 +193,29 @@ export function AduWizard() {
   const common = { step, total: STEP_COUNT, onBack: back };
 
   switch (step) {
-    case 0:
+    case 0: {
+      const found = lookup.status === "found" && p.parcel;
+      const failed = lookup.status === "error";
+      const manual = failed || lookup.status === "manual";
       return (
         <StepCard
           {...common}
           icon={MapPin}
           title="Where's your property?"
-          subtitle="We'll use this on every form. Find your zoning in the city's Address Search Tool."
-          onContinue={next}
-          continueDisabled={!a.address.trim()}
-          missingHint="Add the property address to continue."
+          subtitle="We'll look up its zoning, parcel number and Coastal Zone status in the city's map."
+          onContinue={found || manual ? next : findProperty}
+          continueLabel={found || lookup.status === "manual" ? "Continue" : failed ? "Continue by hand" : lookup.status === "loading" ? "Looking up…" : "Find my property"}
+          continueDisabled={!a.address.trim() || lookup.status === "loading"}
+          missingHint={lookup.status === "loading" ? undefined : "Add the property address to continue."}
         >
           <div className="space-y-4">
             <DemoBar onLoad={loadDemo} loaded={demoLoaded} />
-            <TextField label="Property address" required autoComplete="street-address" placeholder="123 Example St, Newport Beach, CA 92663" value={a.address} onChange={(v) => setAnswer("address", v)} />
+            <TextField label="Property address" required autoComplete="street-address" placeholder="123 Example St, Newport Beach" value={a.address} onChange={changeAddress} />
+            {found && <ParcelCard parcel={p.parcel!} />}
+            {failed && (
+              <p className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-[13.5px] leading-snug text-amber-200">{lookup.message}</p>
+            )}
+            {manual && (
             <div className="grid gap-4 sm:grid-cols-2">
               <TextField
                 label="Zoning district"
@@ -178,9 +230,11 @@ export function AduWizard() {
               />
               <TextField label="Parcel number (APN)" placeholder="Optional" value={p.apn} onChange={(v) => setProfile("apn", v)} hint="On your property tax bill" />
             </div>
+            )}
           </div>
         </StepCard>
       );
+    }
 
     case 1:
       return (

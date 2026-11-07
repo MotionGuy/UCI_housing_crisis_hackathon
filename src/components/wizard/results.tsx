@@ -5,10 +5,11 @@ import {
   CircleAlert,
   CircleCheck,
   CircleX,
-  Landmark,
   ExternalLink,
   FileText,
   Info,
+  ListOrdered,
+  MapPin,
   PencilLine,
   ShieldCheck,
   TriangleAlert,
@@ -16,13 +17,38 @@ import {
 } from "lucide-react";
 import { evaluateAdu } from "@/lib/adu/evaluate";
 import { CITY } from "@/lib/adu/newport-beach";
+import { evaluateParcel, type ParcelEvaluation } from "@/lib/adu/zoning";
 import type { AduAnswers, AduResult, Check, CheckStatus } from "@/lib/adu/types";
 import type { Profile } from "@/lib/forms/types";
+import { ParcelCard } from "./parcel-card";
 import { autofillPreview } from "./review";
 import { StepCard, linkClass } from "./ui";
 
 // Documents we fill in automatically; everything else goes in "still to gather".
 const FILLED_DOC_NAMES = new Set([CITY.documents.buildingPermit.name, CITY.documents.ownersAffidavit.name]);
+
+export interface CombinedResult {
+  result: AduResult;
+  parcelEval: ParcelEvaluation | null;
+  /** Parcel checks + engine checks. With a GIS lookup, the parcel rules replace the engine's generic "coastal" check. */
+  checks: Check[];
+  /** Parcel permits (in order) when the lookup gave any, else the engine's. */
+  permits: string[];
+  notAllowed: boolean;
+}
+
+/** The engine result plus the parcel rules from the address lookup, when there is one. */
+export function combineResults(answers: AduAnswers, profile: Profile): CombinedResult {
+  const result = evaluateAdu(answers);
+  const parcelEval = profile.parcel ? evaluateParcel(profile.parcel, answers.aduType) : null;
+  return {
+    result,
+    parcelEval,
+    checks: parcelEval ? [...parcelEval.checks, ...result.checks.filter((c) => c.id !== "coastal")] : result.checks,
+    permits: parcelEval?.permits.length ? parcelEval.permits : result.permits,
+    notAllowed: parcelEval?.eligibility === "not-allowed",
+  };
+}
 
 export function AduResultsView({
   answers,
@@ -39,21 +65,23 @@ export function AduResultsView({
   /** Shown after the demo is loaded: swaps in the fixed demo application. */
   onLoadFixed?: () => void;
 }) {
-  const result = useMemo(() => evaluateAdu(answers), [answers]);
+  const { result, parcelEval, checks, permits, notAllowed } = useMemo(() => combineResults(answers, profile), [answers, profile]);
   const outOfScope = result.verdict === "out-of-scope";
   const forms = useMemo(() => autofillPreview(answers, profile, false), [answers, profile]);
 
-  const hero: { icon: LucideIcon; tone: string } =
-    result.verdict === "fast-path"
+  const hero: { icon: LucideIcon; tone: string } = notAllowed
+    ? { icon: CircleX, tone: "text-red-400" }
+    : result.verdict === "fast-path"
       ? { icon: ShieldCheck, tone: "text-accent" }
       : result.verdict === "needs-changes"
         ? { icon: TriangleAlert, tone: "text-amber-400" }
         : { icon: CircleX, tone: "text-neutral-300" };
 
-  const toGather = result.documents.filter((d) => !FILLED_DOC_NAMES.has(d.name));
-  const { fails, warns } = issuesOf(result);
-  const otherChecks = result.checks.filter((c) => c.status === "pass" || c.status === "info");
-  const conflicts = result.documents.filter((d) => d.warning);
+  const toGather = [...result.documents.filter((d) => !FILLED_DOC_NAMES.has(d.name)), ...(parcelEval?.documents ?? [])];
+  const blocker = parcelEval?.checks.find((c) => c.status === "fail");
+  const { fails, warns } = issuesOf(checks);
+  const otherChecks = checks.filter((c) => c.status === "pass" || c.status === "info");
+  const conflicts = notAllowed ? [] : result.documents.filter((d) => d.warning);
   const deedRight = result.rights.find((r) => r.id === "deed");
 
   return (
@@ -61,10 +89,10 @@ export function AduResultsView({
       step={0}
       total={0}
       icon={hero.icon}
-      title={result.headline}
-      subtitle={result.summary}
+      title={notAllowed ? "An ADU isn't allowed on this lot" : result.headline}
+      subtitle={notAllowed ? blocker?.detail : result.summary}
       onBack={onEdit}
-      onContinue={outOfScope ? undefined : onReview}
+      onContinue={outOfScope || notAllowed ? undefined : onReview}
       continueLabel="Review and submit"
       continueDisabled={fails.length > 0}
       missingHint={`Fix these first: change the ${fails.length} ${fails.length === 1 ? "item" : "items"} marked in red, then review your forms.`}
@@ -73,7 +101,7 @@ export function AduResultsView({
       {outOfScope ? null : (
         <div className="space-y-9">
           <div className="space-y-3">
-            <StatusBanner fails={fails.length} warns={warns.length} />
+            {!notAllowed && <StatusBanner fails={fails.length} warns={warns.length} />}
             <p className="text-xs text-neutral-500">
               Not legal advice. Rules checked on {result.checkedOn}. Confirm with the City of Newport Beach before you submit.
             </p>
@@ -87,6 +115,12 @@ export function AduResultsView({
               </button>
             )}
           </div>
+
+          {profile.parcel && (
+            <Section title="Your property" icon={MapPin}>
+              <ParcelCard parcel={profile.parcel} />
+            </Section>
+          )}
 
           {(fails.length > 0 || warns.length > 0 || conflicts.length > 0) && (
             <Section title={fails.length ? `Fix these first (${fails.length + warns.length})` : `Check these (${warns.length + conflicts.length})`} icon={TriangleAlert}>
@@ -113,18 +147,20 @@ export function AduResultsView({
             </Section>
           )}
 
-          {result.permits.length > 0 && (
-            <Section title="Who reviews it" icon={Landmark}>
-              <ul className="space-y-2">
-                {result.permits.map((permit) => (
-                  <li key={permit} className="rounded-2xl border border-white/10 bg-white/[0.02] p-3.5 text-[15px] text-white">
-                    {permit}
+          {!notAllowed && permits.length > 0 && (
+            <Section title="Permits you need, in order" icon={ListOrdered}>
+              <ol className="space-y-2">
+                {permits.map((pm, i) => (
+                  <li key={pm} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-3.5 text-[15px] text-white">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent/15 text-xs font-semibold text-accent">{i + 1}</span>
+                    {pm}
                   </li>
                 ))}
-              </ul>
+              </ol>
             </Section>
           )}
 
+          {!notAllowed && (
           <Section title="Forms we fill in for you" icon={FileText}>
             <ul className="space-y-2">
               {forms.map((f) => (
@@ -139,6 +175,7 @@ export function AduResultsView({
             </ul>
             <p className="mt-3 text-xs text-neutral-500">Next you&apos;ll check every value we filled in, then download the forms to sign and file.</p>
           </Section>
+          )}
 
           {otherChecks.length > 0 && (
             <details className="group">
@@ -154,6 +191,7 @@ export function AduResultsView({
             </details>
           )}
 
+          {!notAllowed && (<>
           <Section title="Still to gather" icon={CircleAlert}>
             <ul className="space-y-2">
               {toGather.map((d) => (
@@ -202,7 +240,7 @@ export function AduResultsView({
 
           <Section title="Next steps" icon={PencilLine}>
             <ol className="space-y-3">
-              {result.steps.map((s, i) => (
+              {(profile.parcel ? result.steps.slice(1) : result.steps).map((s, i) => (
                 <li key={s} className="flex gap-3 text-[14.5px] leading-snug text-neutral-300">
                   <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white">{i + 1}</span>
                   {s}
@@ -218,6 +256,7 @@ export function AduResultsView({
               ))}
             </ul>
           </Section>
+          </>)}
         </div>
       )}
     </StepCard>
@@ -225,10 +264,10 @@ export function AduResultsView({
 }
 
 /** Fail and warn checks, fails first. */
-export function issuesOf(result: AduResult): { fails: Check[]; warns: Check[] } {
+export function issuesOf(checks: Check[]): { fails: Check[]; warns: Check[] } {
   return {
-    fails: result.checks.filter((c) => c.status === "fail"),
-    warns: result.checks.filter((c) => c.status === "warn"),
+    fails: checks.filter((c) => c.status === "fail"),
+    warns: checks.filter((c) => c.status === "warn"),
   };
 }
 

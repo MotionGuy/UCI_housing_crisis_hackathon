@@ -171,7 +171,7 @@ function documentsFor(a: AduAnswers): DocumentItem[] {
   } else {
     docs.push({
       ...d.deedRestriction,
-      warning: "The city's 2026 ordinance summary says ADUs don't need a deed restriction (only JADUs do), and HCD says state law doesn't allow one for ADUs. The permit page still lists it, so ask the city before you record one.",
+      warning: "The city's own code (NBMC § 20.48.200(I), Ord. 2025-20) requires a deed restriction only for JADUs, and HCD says state law doesn't allow one for ADUs. The city's ADU permit page still lists it for everyone, so ask the city before you record one.",
     });
   }
   return docs;

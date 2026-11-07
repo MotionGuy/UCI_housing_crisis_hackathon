@@ -12,6 +12,12 @@ const WORKSHEET = {
   electrical: "F[0].P1[0].CheckBox1[3]",
   mechanical: "F[0].P1[0].CheckBox1[4]",
   plumbing: "F[0].P1[0].CheckBox1[5]",
+  // Hazard boxes next to "Project Address": Flood, Fire, Liq, Landslide, N/A
+  flood: "F[0].P1[0].CheckBox4[0]",
+  fire: "F[0].P1[0].CheckBox5[0]",
+  liquefaction: "F[0].P1[0].CheckBox6[0]",
+  landslide: "F[0].P1[0].CheckBox7[0]",
+  hazardNone: "F[0].P1[0].CheckBox8[0]",
   projectAddress: "F[0].P1[0].TextField1[2]",
   use: "F[0].P1[0].TextField1[3]",
   description: "F[0].P1[0].TextField2[0]",
@@ -28,6 +34,7 @@ const WORKSHEET = {
 
 /** Field names in "Discretionary Application Owner's Affidavit". */
 const AFFIDAVIT = {
+  approvalInConcept: "checkbox_1xepg",
   coastalDevelopmentPermit: "checkbox_48bjzn",
   projectAddress: "text_43ueah",
   description: "textarea_41jrte",
@@ -71,6 +78,16 @@ export async function fillWorksheet(pdfBytes: ArrayBuffer | Uint8Array, a: AduAn
   check(WORKSHEET.mechanical);
   check(WORKSHEET.plumbing);
 
+  // Hazard boxes come only from the city's GIS; leave them blank without a lookup.
+  const hz = p.parcel?.hazards;
+  if (hz) {
+    if (hz.floodVE) check(WORKSHEET.flood);
+    if (hz.fireDesignation) check(WORKSHEET.fire);
+    if (hz.liquefaction) check(WORKSHEET.liquefaction);
+    if (hz.landslide) check(WORKSHEET.landslide);
+    if (!hz.floodVE && !hz.fireDesignation && !hz.liquefaction && !hz.landslide) check(WORKSHEET.hazardNone);
+  }
+
   set(WORKSHEET.projectAddress, a.address);
   set(WORKSHEET.use, a.aduType === "jadu" ? "JADU" : "ADU");
   set(WORKSHEET.description, describeWork(a));
@@ -93,8 +110,11 @@ export async function fillAffidavit(pdfBytes: ArrayBuffer | Uint8Array, a: AduAn
   const form = doc.getForm();
   const set = (name: string, value: string) => value && form.getTextField(name).setText(value);
 
-  form.getCheckBox(AFFIDAVIT.coastalDevelopmentPermit).check();
-  set(AFFIDAVIT.projectAddress, [a.address, p.apn && `APN ${p.apn}`].filter(Boolean).join(" / "));
+  // In the Coastal Commission's permit jurisdiction, the city gives an Approval in Concept
+  // and the Commission issues the CDP (NBMC § 21.52.015(B)(1)(a)).
+  const commissionIssues = p.parcel?.coastalAppealArea.toUpperCase() === "PERMIT JURISDICTION";
+  form.getCheckBox(commissionIssues ? AFFIDAVIT.approvalInConcept : AFFIDAVIT.coastalDevelopmentPermit).check();
+  set(AFFIDAVIT.projectAddress, [p.parcel?.matchedAddress ?? a.address, p.apn && `APN ${p.apn}`].filter(Boolean).join(" / "));
   set(AFFIDAVIT.description, describeWork(a));
   set(AFFIDAVIT.ownerNames, `${p.owner.firstName} ${p.owner.lastName}`.trim());
   set(AFFIDAVIT.title1, "Owner");

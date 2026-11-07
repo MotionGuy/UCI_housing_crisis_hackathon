@@ -47,3 +47,6 @@ yarn-error.log*
 
 # sample filled forms (npm run forms:sample)
 /sample-forms
+
+# Claude Code agent worktrees
+.claude/worktrees/

@@ -2,12 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ClipboardCheck, Download, FileText, LoaderCircle, PencilLine, Send, TriangleAlert } from "lucide-react";
-import { evaluateAdu } from "@/lib/adu/evaluate";
 import { CITY } from "@/lib/adu/newport-beach";
 import type { AduAnswers, AduResult } from "@/lib/adu/types";
 import { describeWork, fillAllForms } from "@/lib/forms/fill";
 import type { FilledForm, Person, Profile } from "@/lib/forms/types";
-import { CheckRow, StatusBanner, issuesOf } from "./results";
+import { CheckRow, StatusBanner, combineResults, issuesOf } from "./results";
 import { StepCard, linkClass } from "./ui";
 
 /** Wizard step that sets each value (see AduWizard). */
@@ -48,6 +47,15 @@ export function autofillPreview(a: AduAnswers, p: Profile, valuationEstimated: b
       { label: `${who} email`, value: v.email, step: STEPS.team },
       { label: `${who} phone`, value: v.phone, step: STEPS.team },
     ].filter((f) => f.value || f.label.endsWith("name") || f.label.endsWith("license no."));
+  // Hazard boxes are checked only from the city's GIS (no lookup: left blank).
+  const hz = p.parcel?.hazards;
+  const hazards = hz
+    ? [hz.floodVE && "Flood", hz.fireDesignation && "Fire", hz.liquefaction && "Liquefaction", hz.landslide && "Landslide"].filter(
+        (h): h is string => !!h,
+      )
+    : null;
+  // In the Coastal Commission's permit jurisdiction the city gives an Approval in Concept instead.
+  const commissionIssues = p.parcel?.coastalAppealArea.toUpperCase() === "PERMIT JURISDICTION";
 
   const forms: PreviewForm[] = [
     {
@@ -60,6 +68,16 @@ export function autofillPreview(a: AduAnswers, p: Profile, valuationEstimated: b
           value: "Building, Electrical, Mechanical, Plumbing",
           note: "Assumption: every ADU needs new wiring, plumbing and ventilation.",
         },
+        ...(hazards
+          ? [
+              {
+                label: "Hazards (Flood / Fire / Liq / Landslide / N/A)",
+                value: hazards.length ? hazards.join(", ") : "N/A",
+                step: STEPS.address,
+                note: "From the city's map for this address.",
+              },
+            ]
+          : []),
         { label: "Project address (not mailing address)", value: a.address, step: STEPS.address },
         { label: "Use", value: a.aduType === "jadu" ? "JADU" : "ADU", step: STEPS.aduType },
         { label: "Description of work", value: describeWork(a), step: STEPS.size },
@@ -86,11 +104,20 @@ export function autofillPreview(a: AduAnswers, p: Profile, valuationEstimated: b
       fields: [
         {
           label: "Permit requested",
-          value: "Coastal Development Permit",
-          step: STEPS.coastal,
-          note: a.coastalZone === "unsure" ? "Included because you're not sure the lot is in the Coastal Zone." : undefined,
+          value: commissionIssues ? "Approval in Concept" : "Coastal Development Permit",
+          // With a lookup the city's map answered the Coastal Zone question, so change the address instead.
+          step: p.parcel ? STEPS.address : STEPS.coastal,
+          note: commissionIssues
+            ? "The city's map puts this lot in the Coastal Commission's permit jurisdiction: the city gives an Approval in Concept and the Commission issues the CDP."
+            : a.coastalZone === "unsure"
+              ? "Included because you're not sure the lot is in the Coastal Zone."
+              : undefined,
         },
-        { label: "Project address / parcel number (APN)", value: [a.address, p.apn && `APN ${p.apn}`].filter(Boolean).join(" / "), step: STEPS.address },
+        {
+          label: "Project address / parcel number (APN)",
+          value: [p.parcel?.matchedAddress ?? a.address, p.apn && `APN ${p.apn}`].filter(Boolean).join(" / "),
+          step: STEPS.address,
+        },
         { label: "Project description", value: describeWork(a), step: STEPS.size },
         { label: "Property owner name(s)", value: `${p.owner.firstName} ${p.owner.lastName}`.trim(), step: STEPS.owner },
         { label: "Signer's title", value: "Owner" },
@@ -121,11 +148,11 @@ export function ReviewView({
   onEditStep: (step: number) => void;
   onSubmit: () => void;
 }) {
-  const result = useMemo(() => evaluateAdu(answers), [answers]);
+  const { result, checks, notAllowed } = useMemo(() => combineResults(answers, profile), [answers, profile]);
   const forms = useMemo(() => autofillPreview(answers, profile, valuationEstimated), [answers, profile, valuationEstimated]);
   const [confirmed, setConfirmed] = useState(false);
-  const { fails, warns } = issuesOf(result);
-  const blocked = fails.length > 0 || result.verdict === "out-of-scope";
+  const { fails, warns } = issuesOf(checks);
+  const blocked = fails.length > 0 || notAllowed || result.verdict === "out-of-scope";
   const conflicts = result.documents.filter((d) => d.warning);
 
   return (
@@ -211,7 +238,9 @@ export function ReviewView({
 
 /** Final step: download the filled forms and a how-to-file summary. Never files with the city. */
 export function SubmitView({ answers, profile, onBack }: { answers: AduAnswers; profile: Profile; onBack: () => void }) {
-  const result = useMemo(() => evaluateAdu(answers), [answers]);
+  const { result, permits } = useMemo(() => combineResults(answers, profile), [answers, profile]);
+  // With a lookup, the first step ("check your address") is already done.
+  const steps = profile.parcel ? result.steps.slice(1) : result.steps;
   const [forms, setForms] = useState<FilledForm[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -225,7 +254,7 @@ export function SubmitView({ answers, profile, onBack }: { answers: AduAnswers; 
     };
   }, [answers, profile]);
 
-  const summary = useMemo(() => howToFile(answers, result), [answers, result]);
+  const summary = useMemo(() => howToFile(answers, result, permits, steps), [answers, result, permits, steps]);
   const downloadSummary = () => save(new Blob([summary], { type: "text/plain" }), "newport-beach-adu-how-to-file.txt");
   const downloadAll = () => {
     forms?.forEach(download);
@@ -278,7 +307,7 @@ export function SubmitView({ answers, profile, onBack }: { answers: AduAnswers; 
             <PencilLine className="size-4" /> How to file
           </h2>
           <ol className="space-y-3">
-            {result.steps.map((s, i) => (
+            {steps.map((s, i) => (
               <li key={s} className="flex gap-3 text-[14.5px] leading-snug text-neutral-300">
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white">{i + 1}</span>
                 {s}
@@ -310,7 +339,7 @@ function DownloadRow({ title, label, onClick }: { title: string; label: string; 
   );
 }
 
-function howToFile(a: AduAnswers, r: AduResult): string {
+function howToFile(a: AduAnswers, r: AduResult, permits: string[], steps: string[]): string {
   const list = (items: string[]) => items.map((s, i) => `${i + 1}. ${s}`).join("\n");
   return [
     "Clear It: how to file your Newport Beach ADU application",
@@ -318,11 +347,11 @@ function howToFile(a: AduAnswers, r: AduResult): string {
     "",
     "Clear It does not file anything with the city. You file this package yourself.",
     "",
-    "Permits (who reviews it):",
-    list(r.permits),
+    "Permits you need, in order:",
+    list(permits),
     "",
     "Steps:",
-    list(r.steps),
+    list(steps),
     "",
     "Bring or upload with the filled forms:",
     list(r.documents.map((d) => (d.warning ? `${d.name} (note: ${d.warning})` : d.name))),
