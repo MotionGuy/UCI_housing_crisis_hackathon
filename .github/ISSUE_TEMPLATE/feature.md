@@ -12,7 +12,7 @@ assignees: ""
 
 ## Why
 
-<!-- Which part of the problem does this solve? housing / affordability / jobs / commute / ui -->
+<!-- Which workstream? requirements / checks / app / pitch. How does it help get the first submission right? -->
 
 ## Done when
 

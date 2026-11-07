@@ -4,12 +4,17 @@
 
 ## Area
 
-- [ ] housing
-- [ ] affordability
-- [ ] jobs
-- [ ] commute
-- [ ] ui
+- [ ] requirements (forms, fees, departments, state limits)
+- [ ] checks (correction prevention)
+- [ ] app (intake, results)
+- [ ] pitch / research
 - [ ] docs / chore
+
+## Hard rules
+
+- [ ] Every new rule or check cites its source
+- [ ] Pass/fail comes from rules, not the AI
+- [ ] Every number shown is sourced or labeled as an estimate
 
 ## How I tested it
 
