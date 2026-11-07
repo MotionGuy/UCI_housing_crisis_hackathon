@@ -102,6 +102,7 @@ export function AduWizard() {
       <AduResultsView
         answers={a}
         profile={{ ...p, valuation: p.valuation || a.squareFeet * 300 }}
+        onLoadFixed={demoLoaded ? () => setA(fixedAnswers) : undefined}
         onEdit={() => {
           setDone(false);
           setStep(0);

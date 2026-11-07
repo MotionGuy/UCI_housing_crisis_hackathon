@@ -6,6 +6,7 @@ import {
   CircleCheck,
   CircleX,
   Download,
+  Landmark,
   ExternalLink,
   FileText,
   Info,
@@ -17,7 +18,7 @@ import {
 } from "lucide-react";
 import { evaluateAdu } from "@/lib/adu/evaluate";
 import { CITY } from "@/lib/adu/newport-beach";
-import type { AduAnswers, Check, CheckStatus } from "@/lib/adu/types";
+import type { AduAnswers, AduResult, Check, CheckStatus } from "@/lib/adu/types";
 import { fillAllForms } from "@/lib/forms/fill";
 import type { FilledForm, Profile } from "@/lib/forms/types";
 import { StepCard, linkClass } from "./ui";
@@ -25,7 +26,18 @@ import { StepCard, linkClass } from "./ui";
 // Documents we fill in automatically; everything else goes in "still to gather".
 const FILLED_DOC_NAMES = new Set([CITY.documents.buildingPermit.name, CITY.documents.ownersAffidavit.name]);
 
-export function AduResultsView({ answers, profile, onEdit }: { answers: AduAnswers; profile: Profile; onEdit: () => void }) {
+export function AduResultsView({
+  answers,
+  profile,
+  onEdit,
+  onLoadFixed,
+}: {
+  answers: AduAnswers;
+  profile: Profile;
+  onEdit: () => void;
+  /** Shown after the demo is loaded: swaps in the fixed demo application. */
+  onLoadFixed?: () => void;
+}) {
   const result = useMemo(() => evaluateAdu(answers), [answers]);
   const [forms, setForms] = useState<FilledForm[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +62,10 @@ export function AduResultsView({ answers, profile, onEdit }: { answers: AduAnswe
         : { icon: CircleX, tone: "text-neutral-300" };
 
   const toGather = result.documents.filter((d) => !FILLED_DOC_NAMES.has(d.name));
+  const { fails, warns } = issuesOf(result);
+  const otherChecks = result.checks.filter((c) => c.status === "pass" || c.status === "info");
+  const conflicts = result.documents.filter((d) => d.warning);
+  const deedRight = result.rights.find((r) => r.id === "deed");
 
   return (
     <StepCard
@@ -63,6 +79,59 @@ export function AduResultsView({ answers, profile, onEdit }: { answers: AduAnswe
     >
       {outOfScope ? null : (
         <div className="space-y-9">
+          <div className="space-y-3">
+            <StatusBanner fails={fails.length} warns={warns.length} />
+            <p className="text-xs text-neutral-500">
+              Not legal advice. Rules checked on {result.checkedOn}. Confirm with the City of Newport Beach before you submit.
+            </p>
+            {onLoadFixed && (
+              <button
+                type="button"
+                onClick={onLoadFixed}
+                className="h-9 rounded-xl border border-dashed border-white/15 px-3 text-[13px] font-medium text-neutral-300 transition hover:bg-white/[0.06]"
+              >
+                Load fixed version (demo)
+              </button>
+            )}
+          </div>
+
+          {(fails.length > 0 || warns.length > 0 || conflicts.length > 0) && (
+            <Section title={fails.length ? `Fix these first (${fails.length + warns.length})` : `Check these (${warns.length})`} icon={TriangleAlert}>
+              <ul className="space-y-2">
+                {[...fails, ...warns].map((c) => (
+                  <CheckRow key={c.id} check={c} />
+                ))}
+                {conflicts.map((d) => (
+                  <li key={d.name} className="flex gap-3 rounded-2xl border border-amber-400/25 bg-amber-400/[0.05] p-3.5">
+                    <TriangleAlert className="mt-0.5 size-5 shrink-0 text-amber-400" />
+                    <div className="min-w-0">
+                      <p className="text-[15px] font-medium text-white">City vs. state conflict: {d.name}</p>
+                      <p className="mt-0.5 text-sm leading-snug text-neutral-400">{d.warning}</p>
+                      <p className="mt-1.5 flex flex-wrap gap-x-3 text-xs text-neutral-500">
+                        {d.url && <SourceLink label="City permit page" url={d.url} />}
+                        {deedRight?.citation && d.name.startsWith("Deed restriction") && (
+                          <SourceLink label={deedRight.citation.label} url={deedRight.citation.url} />
+                        )}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )}
+
+          {result.permits.length > 0 && (
+            <Section title="Who reviews it" icon={Landmark}>
+              <ul className="space-y-2">
+                {result.permits.map((permit) => (
+                  <li key={permit} className="rounded-2xl border border-white/10 bg-white/[0.02] p-3.5 text-[15px] text-white">
+                    {permit}
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          )}
+
           <Section title="Your forms, filled in" icon={FileText}>
             {error ? (
               <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>
@@ -92,13 +161,19 @@ export function AduResultsView({ answers, profile, onEdit }: { answers: AduAnswe
             <p className="mt-3 text-xs text-neutral-500">Check every value, then sign where the form asks for a signature.</p>
           </Section>
 
-          <Section title="Rule check" icon={CircleCheck}>
-            <ul className="space-y-2">
-              {result.checks.map((c) => (
-                <CheckRow key={c.id} check={c} />
-              ))}
-            </ul>
-          </Section>
+          {otherChecks.length > 0 && (
+            <details className="group">
+              <summary className="mb-3 flex cursor-pointer list-none items-center gap-2 text-[13px] font-semibold tracking-wide text-neutral-400 uppercase hover:text-neutral-200">
+                <CircleCheck className="size-4" /> Checks that passed ({otherChecks.length})
+                <span className="text-[11px] font-normal tracking-normal normal-case text-neutral-500 group-open:hidden">Show</span>
+              </summary>
+              <ul className="space-y-2">
+                {otherChecks.map((c) => (
+                  <CheckRow key={c.id} check={c} />
+                ))}
+              </ul>
+            </details>
+          )}
 
           <Section title="Still to gather" icon={CircleAlert}>
             <ul className="space-y-2">
@@ -170,6 +245,49 @@ export function AduResultsView({ answers, profile, onEdit }: { answers: AduAnswe
   );
 }
 
+/** Fail and warn checks, fails first. */
+export function issuesOf(result: AduResult): { fails: Check[]; warns: Check[] } {
+  return {
+    fails: result.checks.filter((c) => c.status === "fail"),
+    warns: result.checks.filter((c) => c.status === "warn"),
+  };
+}
+
+/** "Ready to submit" only with no fails and no warnings. */
+export function StatusBanner({ fails, warns }: { fails: number; warns: number }) {
+  const [tone, Icon, title, text] =
+    fails > 0
+      ? (["border-red-500/30 bg-red-500/10 text-red-200", CircleX, `Fix these first (${fails + warns} ${fails + warns === 1 ? "issue" : "issues"})`, `${fails} must change before you can submit${warns ? `, ${warns} to check` : ""}.`] as const)
+      : warns > 0
+        ? (["border-amber-400/30 bg-amber-400/10 text-amber-100", TriangleAlert, `Almost ready: check ${warns} ${warns === 1 ? "warning" : "warnings"}`, "Nothing blocks you, but a plan checker may ask about these."] as const)
+        : (["border-accent/30 bg-accent/10 text-white", ShieldCheck, "Ready to submit", "No rule problems found. Review your forms, then file them with the city."] as const);
+  return (
+    <div className={`flex items-start gap-3 rounded-2xl border p-4 ${tone}`} role="status">
+      <Icon className="mt-0.5 size-6 shrink-0" />
+      <div>
+        <p className="text-[18px] font-semibold">{title}</p>
+        <p className="mt-0.5 text-sm opacity-80">{text}</p>
+      </div>
+    </div>
+  );
+}
+
+function SourceLink({ label, url }: { label: string; url?: string }) {
+  const assumption = label.startsWith("Assumption:");
+  const text = assumption ? label : `Source: ${label}`;
+  return (
+    <span className={assumption ? "rounded bg-amber-400/10 px-1.5 py-0.5 text-amber-200" : undefined}>
+      {url ? (
+        <a className="underline decoration-white/20 underline-offset-2 hover:text-neutral-300" href={url} target="_blank" rel="noreferrer">
+          {text}
+        </a>
+      ) : (
+        text
+      )}
+    </span>
+  );
+}
+
 function Section({ title, icon: Icon, children }: { title: string; icon: LucideIcon; children: React.ReactNode }) {
   return (
     <section>
@@ -188,7 +306,7 @@ const STATUS: Record<CheckStatus, { icon: LucideIcon; tone: string }> = {
   info: { icon: Info, tone: "text-sky-400" },
 };
 
-function CheckRow({ check }: { check: Check }) {
+export function CheckRow({ check }: { check: Check }) {
   const s = STATUS[check.status];
   return (
     <li className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-3.5">
@@ -198,13 +316,7 @@ function CheckRow({ check }: { check: Check }) {
         <p className="mt-0.5 text-sm leading-snug text-neutral-400">{check.detail}</p>
         {check.citation && (
           <p className="mt-1.5 text-xs text-neutral-500">
-            {check.citation.url ? (
-              <a className="underline decoration-white/20 underline-offset-2 hover:text-neutral-300" href={check.citation.url} target="_blank" rel="noreferrer">
-                {check.citation.label}
-              </a>
-            ) : (
-              check.citation.label
-            )}
+            <SourceLink label={check.citation.label} url={check.citation.url} />
           </p>
         )}
       </div>
