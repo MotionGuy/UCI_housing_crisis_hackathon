@@ -10,7 +10,7 @@ import { evaluateParcel } from "@/lib/adu/zoning";
 import type { Profile } from "@/lib/forms/types";
 
 /** Intake step numbers (same as STEPS in review.tsx; kept here so this file has no UI imports). */
-export const STEP = { address: 0, coastal: 1, lot: 2, aduType: 3, size: 4, owner: 5, team: 6 } as const;
+export const STEP = { address: 0, lot: 1, aduType: 2, size: 3, owner: 4, team: 5 } as const;
 
 export type IssueField =
   | "address"
@@ -18,6 +18,7 @@ export type IssueField =
   | "squareFeet"
   | "bedrooms"
   | "heightFeet"
+  | "houseHeightFeet"
   | "sideRearSetbackFeet"
   | "ownerLivesOnSite";
 
@@ -45,8 +46,10 @@ const CHECK_FIELD: Record<string, { step: number; field: IssueField }> = {
   size: { step: STEP.size, field: "squareFeet" },
   setback: { step: STEP.size, field: "sideRearSetbackFeet" },
   height: { step: STEP.size, field: "heightFeet" },
+  "height-house": { step: STEP.size, field: "heightFeet" },
   owner: { step: STEP.owner, field: "ownerLivesOnSite" },
-  coastal: { step: STEP.coastal, field: "coastalZone" },
+  // Coastal Zone comes from the address lookup; "unsure" (no lookup) shows as an amber note on the address step.
+  coastal: { step: STEP.address, field: "coastalZone" },
   // evaluateParcel (from the address lookup)
   jurisdiction: { step: STEP.address, field: "address" },
   zone: { step: STEP.address, field: "address" },
@@ -76,6 +79,13 @@ function limitFor(id: string, a: AduAnswers): string | undefined {
     }`;
   }
   if (id === "setback") return `Allowed: ${STATE.guaranteedDetached.minSetbackFeet} ft or more.`;
+  if (id === "height-house") {
+    const cap = STATE.height.attachedFeet;
+    const house = a.houseHeightFeet !== null && a.houseHeightFeet > 0 ? a.houseHeightFeet : null;
+    return house === null
+      ? `Allowed: up to ${cap} ft, and no taller than your house.`
+      : `Allowed: up to ${Math.min(house, cap)} ft (no taller than your ${house} ft house, never over ${cap} ft).`;
+  }
   return undefined;
 }
 
@@ -90,6 +100,9 @@ function inputErrors(step: number, a: AduAnswers): StepIssue[] {
   if (!Number.isInteger(a.bedrooms) || a.bedrooms < 0) add("bedrooms", "Bedrooms", "Enter a whole number of bedrooms: 0 for a studio, 1 or more otherwise.");
   if (isNew) {
     if (a.heightFeet === null || !Number.isFinite(a.heightFeet) || a.heightFeet <= 0) add("heightFeet", "Height", "Enter the ADU's height in feet, a number above 0.");
+    if (a.houseHeightFeet === null || !Number.isFinite(a.houseHeightFeet) || a.houseHeightFeet <= 0) {
+      add("houseHeightFeet", "Height of the main house", "Enter the main house's height in feet, a number above 0.");
+    }
     if (a.sideRearSetbackFeet === null || !Number.isFinite(a.sideRearSetbackFeet)) {
       add("sideRearSetbackFeet", "Side and rear setback", "Enter the distance to the nearest side or rear property line, in feet.");
     } else if (a.sideRearSetbackFeet < 0) {
@@ -110,6 +123,8 @@ export function stepIssues(step: number, a: AduAnswers, p: Profile): StepIssues 
     // A parcel check belongs to the address step, even when its id matches an engine check (e.g. "coastal").
     const where = fromParcel ? { step: STEP.address, field: "address" as const } : CHECK_FIELD[check.id];
     if (!where || where.step !== step || badInput.has(where.field)) continue;
+    // The house-height rule needs a valid house height first.
+    if (check.id === "height-house" && badInput.has("houseHeightFeet")) continue;
     const issue: StepIssue = {
       id: check.id,
       field: where.field,
@@ -126,7 +141,6 @@ export function stepIssues(step: number, a: AduAnswers, p: Profile): StepIssues 
 /** First intake step that has a blocking error, or -1. Used before returning to the review screen. */
 export function firstBlockedStep(a: AduAnswers, p: Profile, stepCount: number): number {
   for (let s = 0; s < stepCount; s++) {
-    if (s === STEP.coastal && p.parcel) continue; // skipped when the lookup answered it
     if (stepIssues(s, a, p).errors.length > 0) return s;
   }
   return -1;

@@ -81,6 +81,20 @@ export function evaluateAdu(a: AduAnswers): AduResult {
         ? pass("height", "Height", `${height} ft is within the guaranteed height. ${why}`, STATE.height.citation)
         : warn("height", "Height", `${height} ft is above the ${limit} ft the state guarantees. ${why} Check Newport Beach's limit for your zone, or lower the design.`, STATE.height.citation),
     );
+
+    // Blocking: no taller than the main house, and never over 25 ft (AutoADU's simplified rule).
+    const cap = STATE.height.attachedFeet;
+    const house = a.houseHeightFeet !== null && a.houseHeightFeet > 0 ? a.houseHeightFeet : null;
+    const houseLimit = house === null ? cap : Math.min(house, cap);
+    const rule =
+      house === null
+        ? `Your ADU can be at most ${cap} ft: never over ${cap} ft, and no taller than your house.`
+        : `Your ADU can be at most ${houseLimit} ft: no taller than your house (${house} ft) and never over ${cap} ft.`;
+    checks.push(
+      height <= houseLimit
+        ? pass("height-house", "Height compared with your house", `${rule} Yours is ${height} ft.`, STATE.height.houseCapCitation)
+        : fail("height-house", "Height compared with your house", `${rule} Yours is ${height} ft. Lower the design.`, STATE.height.houseCapCitation),
+    );
   }
 
   // ---- State-guaranteed detached ADU ----
@@ -130,7 +144,7 @@ export function evaluateAdu(a: AduAnswers): AduResult {
   if (a.coastalZone === "yes") {
     checks.push(warn("coastal", "Coastal Zone", "You may need a Coastal Development Permit before the building permit. It can involve a hearing, so this part may not be fast.", CITY.permitPage));
   } else if (a.coastalZone === "unsure") {
-    checks.push(warn("coastal", "Coastal Zone", "Check your address with the city's Address Search Tool. Much of Newport Beach is in the Coastal Zone, which can add a Coastal Development Permit.", { label: "Newport Beach Address Search Tool", url: CITY.addressTool }));
+    checks.push(warn("coastal", "Coastal Zone", "We couldn't confirm whether this lot is in the Coastal Zone. Check the address, or confirm with the city.", { label: "Newport Beach Address Search Tool", url: CITY.addressTool }));
   }
 
   if (a.usingPreapprovedPlan) {
@@ -207,14 +221,14 @@ function feesFor(a: AduAnswers): FeeItem[] {
 }
 
 function stepsFor(a: AduAnswers): string[] {
-  const steps = ["Check your address with the city's Address Search Tool to confirm the zoning and whether you're in the Coastal Zone."];
+  const steps: string[] = [];
   if (a.coastalZone !== "no") steps.push("If you're in the Coastal Zone, apply for the Coastal Development Permit first.");
   steps.push(
     `Optional: meet with Planning staff (${CITY.planningPhone}). It isn't required but can save a review round.`,
     a.usingPreapprovedPlan ? "Have the pre-approved plan fitted to your lot." : "Have plans drawn for your ADU.",
     "Gather the documents in the checklist below.",
     `Submit in person at the ${CITY.permitCenter}, and pay the plan check fee.`,
-    `Expect ${CITY.review.typicalRounds} review rounds of ${CITY.review.daysPerRound} days each. Track status in the city's CiViC portal.`,
+    "Track your application's status in the city's CiViC portal.",
     "When plans are approved, pay the building permit fee and pick up your permits.",
   );
   return steps;

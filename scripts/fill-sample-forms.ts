@@ -18,6 +18,7 @@ const answers: AduAnswers = {
   squareFeet: 750,
   bedrooms: 1,
   heightFeet: 16,
+  houseHeightFeet: 20,
   sideRearSetbackFeet: 4,
   nearTransit: "yes",
   convertingGarage: false,

@@ -8,7 +8,6 @@ import {
   ExternalLink,
   FileText,
   Info,
-  ListOrdered,
   MapPin,
   PencilLine,
   ShieldCheck,
@@ -65,7 +64,7 @@ export function AduResultsView({
   /** Shown after the demo is loaded: swaps in the fixed demo application. */
   onLoadFixed?: () => void;
 }) {
-  const { result, parcelEval, checks, permits, notAllowed } = useMemo(() => combineResults(answers, profile), [answers, profile]);
+  const { result, parcelEval, checks, notAllowed } = useMemo(() => combineResults(answers, profile), [answers, profile]);
   const outOfScope = result.verdict === "out-of-scope";
   const forms = useMemo(() => autofillPreview(answers, profile, false), [answers, profile]);
 
@@ -79,11 +78,10 @@ export function AduResultsView({
 
   const toGather = [...result.documents.filter((d) => !FILLED_DOC_NAMES.has(d.name)), ...(parcelEval?.documents ?? [])];
   const blocker = parcelEval?.checks.find((c) => c.status === "fail");
-  const { fails, warns } = issuesOf(checks);
-  // The deed-restriction conflict has its own "City vs. state conflict" card, so keep it out of "Checks that passed".
+  // Reaching results means every step passed, so only fails matter here (a safety net); warnings stay on their intake steps.
+  const { fails } = issuesOf(checks);
+  // The deed-restriction conflict is a pitch talking point, not something the applicant fixes: keep it out of "Checks that passed".
   const otherChecks = checks.filter((c) => (c.status === "pass" || c.status === "info") && c.id !== "deed-restriction");
-  const conflicts = notAllowed ? [] : result.documents.filter((d) => d.warning);
-  const deedRight = result.rights.find((r) => r.id === "deed");
 
   return (
     <StepCard
@@ -102,7 +100,7 @@ export function AduResultsView({
       {outOfScope ? null : (
         <div className="space-y-9">
           <div className="space-y-3">
-            {!notAllowed && <StatusBanner fails={fails.length} warns={warns.length} />}
+            {!notAllowed && <StatusBanner fails={fails.length} />}
             <p className="text-xs text-neutral-500">
               Not legal advice. Rules checked on {result.checkedOn}. Confirm with the City of Newport Beach before you submit.
             </p>
@@ -123,46 +121,18 @@ export function AduResultsView({
             </Section>
           )}
 
-          {(fails.length > 0 || warns.length > 0 || conflicts.length > 0) && (
-            <Section title={fails.length ? `Fix these first (${fails.length + warns.length})` : `Check these (${warns.length + conflicts.length})`} icon={TriangleAlert}>
+          {fails.length > 0 && (
+            <Section title={`Fix these first (${fails.length})`} icon={TriangleAlert}>
               <ul className="space-y-2">
-                {[...fails, ...warns].map((c) => (
+                {fails.map((c) => (
                   <CheckRow key={c.id} check={c} />
-                ))}
-                {conflicts.map((d) => (
-                  <li key={d.name} className="flex gap-3 rounded-2xl border border-amber-400/25 bg-amber-400/[0.05] p-3.5">
-                    <TriangleAlert className="mt-0.5 size-5 shrink-0 text-amber-400" />
-                    <div className="min-w-0">
-                      <p className="text-[15px] font-medium text-white">City vs. state conflict: {d.name}</p>
-                      <p className="mt-0.5 text-sm leading-snug text-neutral-400">{d.warning}</p>
-                      <p className="mt-1.5 flex flex-wrap gap-x-3 text-xs text-neutral-500">
-                        {d.url && <SourceLink label="City permit page" url={d.url} />}
-                        {deedRight?.citation && d.name.startsWith("Deed restriction") && (
-                          <SourceLink label={deedRight.citation.label} url={deedRight.citation.url} />
-                        )}
-                      </p>
-                    </div>
-                  </li>
                 ))}
               </ul>
             </Section>
           )}
 
-          {!notAllowed && permits.length > 0 && (
-            <Section title="Permits you need, in order" icon={ListOrdered}>
-              <ol className="space-y-2">
-                {permits.map((pm, i) => (
-                  <li key={pm} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-3.5 text-[15px] text-white">
-                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent/15 text-xs font-semibold text-accent">{i + 1}</span>
-                    {pm}
-                  </li>
-                ))}
-              </ol>
-            </Section>
-          )}
-
           {!notAllowed && (
-          <Section title="Forms we fill in for you" icon={FileText}>
+          <Section title="Forms completed" icon={FileText}>
             <ul className="space-y-2">
               {forms.map((f) => (
                 <li key={f.id} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-3">
@@ -208,11 +178,6 @@ export function AduResultsView({
                       </a>
                     )}
                   </div>
-                  {d.warning && (
-                    <p className="mt-2.5 flex gap-2 rounded-xl bg-amber-400/10 p-2.5 text-[13px] leading-snug text-amber-200">
-                      <TriangleAlert className="mt-0.5 size-4 shrink-0" /> {d.warning}
-                    </p>
-                  )}
                 </li>
               ))}
             </ul>
@@ -241,7 +206,7 @@ export function AduResultsView({
 
           <Section title="Next steps" icon={PencilLine}>
             <ol className="space-y-3">
-              {(profile.parcel ? result.steps.slice(1) : result.steps).map((s, i) => (
+              {result.steps.map((s, i) => (
                 <li key={s} className="flex gap-3 text-[14.5px] leading-snug text-neutral-300">
                   <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white">{i + 1}</span>
                   {s}
@@ -272,14 +237,12 @@ export function issuesOf(checks: Check[]): { fails: Check[]; warns: Check[] } {
   };
 }
 
-/** "Ready to submit" only with no fails and no warnings. */
-export function StatusBanner({ fails, warns }: { fails: number; warns: number }) {
+/** "Ready to submit" when no check fails. Fails can't normally reach results (the intake blocks them), so "Fix these first" is a safety net. */
+export function StatusBanner({ fails }: { fails: number }) {
   const [tone, Icon, title, text] =
     fails > 0
-      ? (["border-red-500/30 bg-red-500/10 text-red-200", CircleX, `Fix these first (${fails + warns} ${fails + warns === 1 ? "issue" : "issues"})`, `${fails} must change before you can submit${warns ? `, ${warns} to check` : ""}.`] as const)
-      : warns > 0
-        ? (["border-amber-400/30 bg-amber-400/10 text-amber-100", TriangleAlert, `Almost ready: check ${warns} ${warns === 1 ? "warning" : "warnings"}`, "Nothing blocks you, but a plan checker may ask about these."] as const)
-        : (["border-accent/30 bg-accent/10 text-white", ShieldCheck, "Ready to submit", "No rule problems found. Review your forms, then file them with the city."] as const);
+      ? (["border-red-500/30 bg-red-500/10 text-red-200", CircleX, `Fix these first (${fails} ${fails === 1 ? "issue" : "issues"})`, `${fails} must change before you can submit.`] as const)
+      : (["border-accent/30 bg-accent/10 text-white", ShieldCheck, "Ready to submit", "No rule problems found. Review your forms, then file them with the city."] as const);
   return (
     <div className={`flex items-start gap-3 rounded-2xl border p-4 ${tone}`} role="status">
       <Icon className="mt-0.5 size-6 shrink-0" />

@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import {
-  CircleHelp,
   DoorOpen,
   FileSignature,
   House,
@@ -11,11 +10,9 @@ import {
   PlayCircle,
   Ruler,
   ShieldCheck,
-  Trees,
   UserRound,
   Users,
   Warehouse,
-  Waves,
 } from "lucide-react";
 import type { AduAnswers, AduType, LotType, YesNoUnsure } from "@/lib/adu/types";
 import { demoAnswers, demoProfile, fixedAnswers } from "@/lib/adu/demo-application";
@@ -28,7 +25,7 @@ import { ReviewView, SubmitView } from "./review";
 import { firstBlockedStep, stepIssues, type IssueField, type StepIssue } from "./step-checks";
 import { IssueNote, OptionList, Segmented, StepCard, TextField, Toggle, linkClass, type Option } from "./ui";
 
-const STEP_COUNT = 7;
+const STEP_COUNT = 6;
 
 const INITIAL_ANSWERS: AduAnswers = {
   address: "",
@@ -38,6 +35,7 @@ const INITIAL_ANSWERS: AduAnswers = {
   squareFeet: 750,
   bedrooms: 1,
   heightFeet: 16,
+  houseHeightFeet: null,
   sideRearSetbackFeet: 4,
   nearTransit: "unsure",
   convertingGarage: false,
@@ -55,12 +53,6 @@ const INITIAL_PROFILE: Profile = {
   designer: EMPTY_PRO,
   contractor: EMPTY_PRO,
 };
-
-const COASTAL: Option<YesNoUnsure>[] = [
-  { value: "yes", title: "Yes, it's coastal", description: "We'll add the Coastal Development Permit forms", icon: Waves },
-  { value: "no", title: "No", description: "Only the building permit is needed", icon: Trees },
-  { value: "unsure", title: "I'm not sure", description: "We'll include the coastal forms just in case", icon: CircleHelp },
-];
 
 const LOTS: Option<LotType>[] = [
   { value: "existing-single-family", title: "A single-family house", description: "The most common ADU project", icon: House },
@@ -111,8 +103,6 @@ export function AduWizard() {
   const fieldError = (f: IssueField) =>
     issues.errors.some((i) => i.field === f) ? <Issues issues={issues} field={f} only="errors" /> : undefined;
 
-  // The Coastal Zone step (1) is skipped when the city's GIS already answered it.
-  const skipCoastal = !!p.parcel;
   /** Moves on from the current step. Pass the answers when they were just set (option steps). */
   const next = (answers: AduAnswers = a) => {
     if (stepIssues(step, answers, p).errors.length > 0) return;
@@ -127,16 +117,19 @@ export function AduWizard() {
       setView("review");
       return;
     }
-    const to = step === 0 && skipCoastal ? 2 : step + 1;
-    if (to < STEP_COUNT) setStep(to);
+    if (step + 1 < STEP_COUNT) setStep(step + 1);
     else setView("results");
   };
-  const back = step > 0 ? () => setStep(step === 2 && skipCoastal ? 0 : step - 1) : undefined;
+  const back = step > 0 ? () => setStep(step - 1) : undefined;
 
   const changeAddress = (v: string) => {
     setAnswer("address", v);
     if (lookup.status !== "idle") setLookup({ status: "idle" });
-    if (p.parcel) setProfile("parcel", undefined);
+    if (p.parcel) {
+      // The Coastal Zone answer came from the old parcel: unknown again until the next lookup.
+      setProfile("parcel", undefined);
+      setAnswer("coastalZone", "unsure");
+    }
   };
 
   const findProperty = async () => {
@@ -144,6 +137,7 @@ export function AduWizard() {
     try {
       const res = (await (await fetch(`/api/parcel?address=${encodeURIComponent(a.address)}`)).json()) as ParcelLookupResult;
       if (!res.ok) {
+        setAnswer("coastalZone", "unsure");
         setLookup({ status: "error", message: res.message });
         return;
       }
@@ -152,6 +146,7 @@ export function AduWizard() {
       setA((prev) => ({ ...prev, address: parcel.matchedAddress, coastalZone: parcel.coastalZone ? "yes" : "no" }));
       setLookup({ status: "found" });
     } catch {
+      setAnswer("coastalZone", "unsure");
       setLookup({ status: "error", message: "The lookup didn't work. You can enter the details by hand." });
     }
   };
@@ -233,6 +228,8 @@ export function AduWizard() {
             {failed && (
               <p className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-[13.5px] leading-snug text-amber-200">{lookup.message}</p>
             )}
+            {/* No lookup: the engine's "coastal" warning (coastalZone "unsure"). Doesn't block. */}
+            {manual && <Issues issues={issues} field="coastalZone" />}
             {manual && (
             <div className="grid gap-4 sm:grid-cols-2">
               <TextField
@@ -256,40 +253,19 @@ export function AduWizard() {
 
     case 1:
       return (
-        <StepCard
-          {...common}
-          icon={Waves}
-          title="Is it in the Coastal Zone?"
-          subtitle={
-            <>
-              Much of Newport Beach is. The{" "}
-              <a className={linkClass} href={CITY.addressTool} target="_blank" rel="noreferrer">
-                Address Search Tool
-              </a>{" "}
-              shows it.
-            </>
-          }
-        >
-          <OptionList options={COASTAL} value={a.coastalZone} onPick={pick("coastalZone")} />
-          <Issues issues={issues} field="coastalZone" />
-        </StepCard>
-      );
-
-    case 2:
-      return (
         <StepCard {...common} icon={House} title="What's on the lot now?" subtitle="An ADU is a second home on a single-family lot.">
           <OptionList options={LOTS} value={a.lotType} onPick={pick("lotType")} />
         </StepCard>
       );
 
-    case 3:
+    case 2:
       return (
         <StepCard {...common} icon={HousePlus} title="Choose your ADU type" subtitle="What kind of unit do you have in mind?">
           <OptionList options={ADU_TYPES} value={a.aduType} onPick={pick("aduType")} />
         </StepCard>
       );
 
-    case 4:
+    case 3:
       return (
         <StepCard {...common} icon={Ruler} title="Size it up" subtitle="Rough numbers are fine. Your designer will confirm them." onContinue={() => next()} continueDisabled={blocked} missingHint={blockedHint}>
           <div className="space-y-4">
@@ -298,12 +274,13 @@ export function AduWizard() {
               <TextField label="Bedrooms" type="number" inputMode="numeric" value={Number.isNaN(a.bedrooms) ? "" : a.bedrooms} onChange={(v) => setAnswer("bedrooms", v === "" ? NaN : Number(v))} hint="0 for a studio" error={fieldError("bedrooms")} />
               {isNew && (
                 <>
-                  <TextField label="Height (ft)" type="number" inputMode="numeric" value={a.heightFeet ?? ""} onChange={(v) => setAnswer("heightFeet", v === "" ? null : Number(v))} error={fieldError("heightFeet")} />
+                  <TextField label="ADU height (ft)" type="number" inputMode="numeric" value={a.heightFeet ?? ""} onChange={(v) => setAnswer("heightFeet", v === "" ? null : Number(v))} error={fieldError("heightFeet")} />
+                  <TextField label="Height of the main house (ft)" type="number" inputMode="numeric" value={a.houseHeightFeet ?? ""} onChange={(v) => setAnswer("houseHeightFeet", v === "" ? null : Number(v))} error={fieldError("houseHeightFeet")} />
                   <TextField label="Side and rear setback (ft)" type="number" inputMode="numeric" value={a.sideRearSetbackFeet ?? ""} onChange={(v) => setAnswer("sideRearSetbackFeet", v === "" ? null : Number(v))} hint="Distance to the nearest side or rear line" error={fieldError("sideRearSetbackFeet")} />
                 </>
               )}
             </div>
-            {/* Warnings (e.g. height above the state-guaranteed limit) don't block. */}
+            {/* Warnings (e.g. height above the 16 ft state guarantee) don't block. */}
             <Issues issues={issues} only="warnings" />
             <Segmented<YesNoUnsure>
               label="Public transit within a half-mile walk? (a bus stop counts)"
@@ -317,7 +294,7 @@ export function AduWizard() {
         </StepCard>
       );
 
-    case 5: {
+    case 4: {
       const o = p.owner;
       const missing = [
         !o.firstName.trim() && "first name",

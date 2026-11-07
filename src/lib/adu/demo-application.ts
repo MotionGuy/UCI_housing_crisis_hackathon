@@ -3,11 +3,11 @@
 // ones in docs/pitch.md § 3; scripts can check each one with evaluateAdu.
 //
 // Demo flow: the intake blocks a step while the rules engine fails one of its
-// values. So the size and setback mistakes are caught live on the "Size it up"
-// step (red, Continue disabled); the presenter types the fixes (900 -> 800,
-// 3 -> 4) and continues. The coastal "not sure" and 17 ft height mistakes are
-// warnings: they show in amber on their steps and on the results page, and
-// "Load fixed version" clears them.
+// values. All three mistakes are caught live on the "Size it up" step (red,
+// Continue disabled): 900 sq ft, a 3 ft setback and a 17 ft ADU next to a 16 ft
+// house. The presenter types the fixes (900 -> 800, 3 -> 4, 17 -> 16) and
+// continues; the results then say "Ready to submit". The demo skips the address
+// lookup, so the Coastal Zone answer is set here ("no").
 import type { AduAnswers } from "./types";
 import { EMPTY_PRO, type Profile } from "@/lib/forms/types";
 
@@ -15,11 +15,12 @@ import { EMPTY_PRO, type Profile } from "@/lib/forms/types";
 export const demoAnswers: AduAnswers = {
   address: "123 Example Lane, Newport Beach, CA 92663",
   lotType: "existing-single-family",
-  coastalZone: "unsure", // mistake: never looked it up
+  coastalZone: "no", // the demo skips the address lookup, which normally sets this
   aduType: "detached",
   squareFeet: 900, // mistake: over the 850 sq ft city cap for 1 bedroom
   bedrooms: 1,
-  heightFeet: 17, // mistake: over the 16 ft the state guarantees
+  heightFeet: 17, // mistake: taller than the 16 ft house
+  houseHeightFeet: 16,
   sideRearSetbackFeet: 3, // mistake: under the 4 ft the state guarantees
   nearTransit: "no",
   convertingGarage: false,
@@ -30,7 +31,8 @@ export const demoAnswers: AduAnswers = {
 /** The same application after the fixes: no fails and no warnings. */
 export const fixedAnswers: AduAnswers = {
   ...demoAnswers,
-  coastalZone: "no", // after checking the Address Search Tool
+  coastalZone: "no",
+  houseHeightFeet: 16,
   squareFeet: 800,
   heightFeet: 16,
   sideRearSetbackFeet: 4,
@@ -58,20 +60,18 @@ export const demoProfile: Profile = {
 };
 
 /**
- * Each planted mistake and the evaluateAdu check that must come back fail or warn.
- * "size" and "setback" fail, so they block the size step in the intake; "coastal"
- * and "height" warn, so they show on their steps and the results page without blocking.
+ * Each planted mistake and the evaluateAdu check that must come back fail.
+ * All three fail on the "Size it up" step, so each blocks Continue until fixed.
  */
 export const plantedMistakes: { description: string; expectedCheckId: string }[] = [
   { description: "900 sq ft is over Newport Beach's 850 sq ft limit for a 1-bedroom ADU (fix: 800 sq ft; blocks the size step)", expectedCheckId: "size" },
   { description: "3 ft side/rear setback is under the 4 ft the state guarantees (fix: 4 ft; blocks the size step)", expectedCheckId: "setback" },
-  { description: "Coastal Zone marked \"not sure\" (fix: look up the address in the city's Address Search Tool)", expectedCheckId: "coastal" },
-  { description: "17 ft height is above the 16 ft the state guarantees for a detached ADU (fix: 16 ft)", expectedCheckId: "height" },
+  { description: "17 ft ADU is taller than the 16 ft house (fix: 16 ft; blocks the size step)", expectedCheckId: "height-house" },
 ];
 
 /**
- * City-vs-state conflicts the demo shows. These are not checks in evaluate.ts:
- * the engine reports them as a document warning plus a "rights" item.
+ * City-vs-state conflicts for the pitch (talking point only; the app no longer shows a
+ * conflict card). The engine reports them as a document warning plus a "rights" item.
  */
 export const plantedConflicts: { description: string; documentName: string; rightId: string }[] = [
   {

@@ -24,6 +24,11 @@ export const STATE = {
     detachedNearTransitFeet: 18,
     attachedFeet: 25,
     citation: gov("66321", "(b)(4)"),
+    /** "No taller than the house" is our simplified rule; the 25 ft cap is in (b)(4)(D). */
+    houseCapCitation: {
+      ...gov("66321", "(b)(4)(D)"),
+      label: "Cal. Gov. Code § 66321(b)(4)(D) (25 ft cap; 'no taller than the house' is AutoADU's simplified rule)",
+    },
   },
   /** A city may not set a max size below these. */
   minimumAllowedMax: {
