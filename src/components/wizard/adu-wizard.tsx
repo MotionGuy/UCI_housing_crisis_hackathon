@@ -8,6 +8,7 @@ import {
   House,
   HousePlus,
   MapPin,
+  PlayCircle,
   Ruler,
   ShieldCheck,
   Trees,
@@ -17,6 +18,7 @@ import {
   Waves,
 } from "lucide-react";
 import type { AduAnswers, AduType, LotType, YesNoUnsure } from "@/lib/adu/types";
+import { demoAnswers, demoProfile, fixedAnswers } from "@/lib/adu/demo-application";
 import { CITY } from "@/lib/adu/newport-beach";
 import { EMPTY_PERSON, EMPTY_PRO, type Person, type Profile } from "@/lib/forms/types";
 import { AduResultsView } from "./results";
@@ -73,10 +75,18 @@ export function AduWizard() {
   const [a, setA] = useState<AduAnswers>(INITIAL_ANSWERS);
   const [p, setP] = useState<Profile>(INITIAL_PROFILE);
   const [done, setDone] = useState(false);
+  const [demoLoaded, setDemoLoaded] = useState(false);
 
   const setAnswer = <K extends keyof AduAnswers>(k: K, v: AduAnswers[K]) => setA((prev) => ({ ...prev, [k]: v }));
   const setProfile = <K extends keyof Profile>(k: K, v: Profile[K]) => setP((prev) => ({ ...prev, [k]: v }));
   const setOwner = (k: keyof Person, v: string) => setP((prev) => ({ ...prev, owner: { ...prev.owner, [k]: v } }));
+
+  /** Fills every answer from the demo application; the presenter then clicks Continue through. */
+  const loadDemo = (answers: AduAnswers) => {
+    setA(answers);
+    setP(demoProfile);
+    setDemoLoaded(true);
+  };
 
   const next = () => (step + 1 < STEP_COUNT ? setStep(step + 1) : setDone(true));
   const back = step > 0 ? () => setStep(step - 1) : undefined;
@@ -116,6 +126,7 @@ export function AduWizard() {
           missingHint="Add the property address to continue."
         >
           <div className="space-y-4">
+            <DemoBar onLoad={loadDemo} loaded={demoLoaded} />
             <TextField label="Property address" required autoComplete="street-address" placeholder="123 Example St, Newport Beach, CA 92663" value={a.address} onChange={(v) => setAnswer("address", v)} />
             <div className="grid gap-4 sm:grid-cols-2">
               <TextField
@@ -259,7 +270,7 @@ export function AduWizard() {
               label="Estimated construction cost ($)"
               type="number"
               inputMode="numeric"
-              placeholder={`${(a.squareFeet * 300).toLocaleString("en-US")} (city estimate: $300 per sq ft)`}
+              placeholder={`${(a.squareFeet * 300).toLocaleString("en-US")} (Estimate: $300 per sq ft)`}
               value={p.valuation || ""}
               onChange={(v) => setProfile("valuation", Number(v))}
             />
@@ -286,6 +297,23 @@ export function AduWizard() {
       );
     }
   }
+}
+
+/** "Load demo application" / "Load fixed version", for the live demo. */
+function DemoBar({ onLoad, loaded }: { onLoad: (a: AduAnswers) => void; loaded: boolean }) {
+  const btn =
+    "flex h-9 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-[13px] font-medium text-neutral-200 transition hover:bg-white/[0.07] active:scale-[0.97]";
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-white/12 p-2.5">
+      <button type="button" className={btn} onClick={() => onLoad(demoAnswers)}>
+        <PlayCircle className="size-4 text-accent" /> Load demo application
+      </button>
+      <button type="button" className={btn} onClick={() => onLoad(fixedAnswers)}>
+        Load fixed version
+      </button>
+      <span className="text-xs text-neutral-500">{loaded ? "Sample data loaded. Click Continue." : "Made-up sample data"}</span>
+    </div>
+  );
 }
 
 /** ["a", "b", "c"] -> "a, b and c" */
