@@ -14,6 +14,7 @@ export async function POST(request: Request) {
   const defaults: Partial<AduAnswers> = {
     address: "",
     heightFeet: null,
+    houseHeightFeet: null,
     sideRearSetbackFeet: null,
     convertingGarage: false,
     ownerLivesOnSite: true,

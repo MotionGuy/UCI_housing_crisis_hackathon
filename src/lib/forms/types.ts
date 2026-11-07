@@ -16,7 +16,15 @@ export interface Professional {
   license: string;
   email: string;
   phone: string;
+  /** Office street address (optional; the worksheet has a row for it). */
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
 }
+
+/** Who will build the ADU: a licensed contractor, the owner as owner-builder, or not chosen yet. */
+export type Builder = "contractor" | "owner-builder" | "undecided";
 
 /** Everything about the people and project that goes onto the city forms. */
 export interface Profile {
@@ -29,8 +37,15 @@ export interface Profile {
   zoningDistrict: string;
   /** Estimated construction cost in USD. */
   valuation: number;
+  /** Whoever drew the plans (required on every plan sheet). */
   designer: Professional;
+  /** Is the designer a licensed architect? null = not answered yet. If not, a licensed engineer must stamp the plans. */
+  designerIsArchitect: boolean | null;
+  /** Engineer who stamps the plans, if any (usually structural). */
+  engineer: Professional;
   contractor: Professional;
+  /** Who will build it. null = not answered yet. The contractor section is filled only for "contractor". */
+  builder: Builder | null;
   /** Facts from the city's GIS, when the address lookup worked. */
   parcel?: ParcelInfo;
 }
@@ -46,7 +61,7 @@ export const EMPTY_PERSON: Person = {
   phone: "",
 };
 
-export const EMPTY_PRO: Professional = { name: "", license: "", email: "", phone: "" };
+export const EMPTY_PRO: Professional = { name: "", license: "", email: "", phone: "", address: "", city: "", state: "", zip: "" };
 
 export interface FilledForm {
   id: string;

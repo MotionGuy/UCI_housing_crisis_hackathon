@@ -1,17 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ClipboardCheck, Download, FileText, LoaderCircle, PencilLine, Send, TriangleAlert } from "lucide-react";
+import { ClipboardCheck, Clock3, Download, FileText, ListTodo, LoaderCircle, PencilLine, Send } from "lucide-react";
 import { CITY } from "@/lib/adu/newport-beach";
 import type { AduAnswers, AduResult } from "@/lib/adu/types";
 import { describeWork } from "@/lib/forms/fill";
-import type { FilledForm, Person, Profile } from "@/lib/forms/types";
+import type { Builder, FilledForm, Person, Professional, Profile } from "@/lib/forms/types";
 import { PdfPreview, useFilledForms } from "./form-preview";
 import { CheckRow, StatusBanner, combineResults, issuesOf } from "./results";
+import { TEAM_SOURCES } from "./step-checks";
 import { StepCard, linkClass } from "./ui";
 
 /** Wizard step that sets each value (see AduWizard). */
-export const STEPS = { address: 0, coastal: 1, lot: 2, aduType: 3, size: 4, owner: 5, team: 6 } as const;
+export const STEPS = { address: 0, lot: 1, aduType: 2, size: 3, owner: 4, team: 5 } as const;
 
 interface PreviewField {
   label: string;
@@ -41,13 +42,20 @@ export function autofillPreview(a: AduAnswers, p: Profile, valuationEstimated: b
     { label: `${who} email`, value: v.email, step: STEPS.owner, note },
     { label: `${who} phone`, value: v.phone, step: STEPS.owner, note },
   ];
-  const pro = (who: string, v: Profile["designer"]): PreviewField[] =>
+  // Name and license always show (blank = "Left blank"); the optional rows only when filled.
+  const pro = (who: string, v: Professional): PreviewField[] =>
     [
       { label: `${who} name`, value: v.name, step: STEPS.team },
       { label: `${who} license no.`, value: v.license, step: STEPS.team },
+      {
+        label: `${who} office address`,
+        value: [v.address, v.city, [v.state, v.zip].filter(Boolean).join(" ")].filter(Boolean).join(", "),
+        step: STEPS.team,
+      },
       { label: `${who} email`, value: v.email, step: STEPS.team },
       { label: `${who} phone`, value: v.phone, step: STEPS.team },
     ].filter((f) => f.value || f.label.endsWith("name") || f.label.endsWith("license no."));
+  const hasEngineer = Object.values(p.engineer).some((x) => typeof x === "string" && x.trim());
   // Hazard boxes are checked only from the city's GIS (no lookup: left blank).
   const hz = p.parcel?.hazards;
   const hazards = hz
@@ -94,7 +102,22 @@ export function autofillPreview(a: AduAnswers, p: Profile, valuationEstimated: b
         ...person("Owner", p.owner),
         ...person("Applicant", applicant, sameAsOwner),
         ...pro("Architect / designer", p.designer),
-        ...pro("Contractor", p.contractor),
+        {
+          label: "Designer is a licensed architect",
+          value: p.designerIsArchitect === null ? "" : p.designerIsArchitect ? "Yes" : "No",
+          step: STEPS.team,
+          note: p.designerIsArchitect === false ? "Not on the form. A licensed engineer must stamp your plans." : "Not on the form. Tells AutoADU whether an engineer is required.",
+        },
+        ...(hasEngineer ? pro("Engineer", p.engineer) : []),
+        {
+          label: "Who will build it",
+          value: p.builder ? BUILDER_LABEL[p.builder] : "",
+          step: STEPS.team,
+          note: "Not on the form. The contractor rows are filled only for a licensed contractor.",
+        },
+        ...(p.builder === "contractor"
+          ? pro("Contractor", p.contractor)
+          : [{ label: "Contractor", value: "", step: STEPS.team, note: "Left blank until you choose a licensed contractor. See \"Before your permit is issued\"." }]),
       ],
     },
   ];
@@ -106,12 +129,12 @@ export function autofillPreview(a: AduAnswers, p: Profile, valuationEstimated: b
         {
           label: "Permit requested",
           value: commissionIssues ? "Approval in Concept" : "Coastal Development Permit",
-          // With a lookup the city's map answered the Coastal Zone question, so change the address instead.
-          step: p.parcel ? STEPS.address : STEPS.coastal,
+          // The Coastal Zone answer comes from the address lookup, so change the address.
+          step: STEPS.address,
           note: commissionIssues
             ? "The city's map puts this lot in the Coastal Commission's permit jurisdiction: the city gives an Approval in Concept and the Commission issues the CDP."
             : a.coastalZone === "unsure"
-              ? "Included because you're not sure the lot is in the Coastal Zone."
+              ? "Included because we couldn't confirm whether the lot is in the Coastal Zone."
               : undefined,
         },
         {
@@ -133,7 +156,7 @@ export function autofillPreview(a: AduAnswers, p: Profile, valuationEstimated: b
   return forms;
 }
 
-/** Review every autofilled value, then confirm before Submit. */
+/** Review every autofilled value, then confirm before "Finish and download". */
 export function ReviewView({
   answers,
   profile,
@@ -153,9 +176,8 @@ export function ReviewView({
   const forms = useMemo(() => autofillPreview(answers, profile, valuationEstimated), [answers, profile, valuationEstimated]);
   const [confirmed, setConfirmed] = useState(false);
   const pdfs = useFilledForms(answers, profile);
-  const { fails, warns } = issuesOf(checks);
+  const { fails } = issuesOf(checks);
   const blocked = fails.length > 0 || notAllowed || result.verdict === "out-of-scope";
-  const conflicts = result.documents.filter((d) => d.warning);
 
   return (
     <StepCard
@@ -166,27 +188,18 @@ export function ReviewView({
       subtitle="Every value AutoADU put on your city forms. Change anything that's wrong."
       onBack={onBack}
       onContinue={onSubmit}
-      continueLabel="Submit"
+      continueLabel="Finish and download"
       continueDisabled={blocked || !confirmed}
       missingHint={blocked ? "Fix these first: change the items marked in red." : "Confirm you checked these values to continue."}
       wide
     >
       <div className="space-y-8">
-        {(blocked || warns.length > 0 || conflicts.length > 0) && (
+        {fails.length > 0 && (
           <div className="space-y-3">
-            {fails.length > 0 && <StatusBanner fails={fails.length} warns={warns.length} />}
+            <StatusBanner fails={fails.length} />
             <ul className="space-y-2">
-              {[...fails, ...warns].map((c) => (
+              {fails.map((c) => (
                 <CheckRow key={c.id} check={c} />
-              ))}
-              {conflicts.map((d) => (
-                <li key={d.name} className="flex gap-3 rounded-2xl border border-amber-400/25 bg-amber-400/[0.05] p-3.5 text-sm text-neutral-300">
-                  <TriangleAlert className="mt-0.5 size-5 shrink-0 text-amber-400" />
-                  <span>
-                    <span className="font-medium text-white">{d.name}: </span>
-                    {d.warning}
-                  </span>
-                </li>
               ))}
             </ul>
           </div>
@@ -241,14 +254,58 @@ export function ReviewView({
   );
 }
 
-/** Final step: download the filled forms and a how-to-file summary. Never files with the city. */
+export const BUILDER_LABEL: Record<Builder, string> = {
+  contractor: "Licensed contractor",
+  "owner-builder": "Me (owner-builder)",
+  undecided: "Not chosen yet",
+};
+
+/** To-dos due when the city issues the permit (not blockers for plan check). Empty for a licensed contractor. */
+export function beforeIssuance(p: Profile): { text: string; source: { label: string; url: string } }[] {
+  if (p.builder === "owner-builder") {
+    return [
+      {
+        text: "Sign the city's Owner-Builder Acknowledgement form (initial each item) and show your driver's license, or bring a notarized form.",
+        source: TEAM_SOURCES.ownerBuilderForm,
+      },
+      { text: "Create your own CiViC account. Owner-builders need one to get the building permit.", source: TEAM_SOURCES.civicAccount },
+    ];
+  }
+  if (p.builder === "undecided" || p.builder === null) {
+    return [
+      {
+        text: "Add a licensed contractor (name, license number, and the email on their CiViC account), or sign the city's Owner-Builder Acknowledgement form to build it yourself.",
+        source: TEAM_SOURCES.licenseBeforePermit,
+      },
+      { text: "Whoever builds it (your contractor, or you as owner-builder) needs a CiViC account.", source: TEAM_SOURCES.civicAccount },
+    ];
+  }
+  return [];
+}
+
+const ADU_LABEL: Record<AduAnswers["aduType"], string> = {
+  detached: "Detached ADU",
+  attached: "Attached ADU",
+  converted: "Converted-space ADU",
+  jadu: "Junior ADU (JADU)",
+};
+
+/** Required under the status card: AutoADU never files with the city (hard rule: don't imply it did). */
+export const FILING_PREVIEW_NOTE =
+  "Preview of upcoming filing. AutoADU doesn't send forms to the city yet — download your package and file it at the Permit Center or through CiViC.";
+
+/**
+ * Final step: a "Waiting for approval" card (a preview of the filing the full product will do),
+ * then the filled forms and a how-to-file summary to download. Never files with the city.
+ */
 export function SubmitView({ answers, profile, onBack }: { answers: AduAnswers; profile: Profile; onBack: () => void }) {
   const { result, permits } = useMemo(() => combineResults(answers, profile), [answers, profile]);
-  // With a lookup, the first step ("check your address") is already done.
-  const steps = profile.parcel ? result.steps.slice(1) : result.steps;
+  const steps = result.steps;
   const { forms, error, updating } = useFilledForms(answers, profile);
+  const today = useMemo(() => new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }), []);
 
-  const summary = useMemo(() => howToFile(answers, result, permits, steps), [answers, result, permits, steps]);
+  const todo = useMemo(() => beforeIssuance(profile), [profile]);
+  const summary = useMemo(() => howToFile(answers, result, permits, steps, todo), [answers, result, permits, steps, todo]);
   const downloadSummary = () => save(new Blob([summary], { type: "text/plain" }), "newport-beach-adu-how-to-file.txt");
   const downloadAll = () => {
     forms?.forEach(download);
@@ -256,16 +313,61 @@ export function SubmitView({ answers, profile, onBack }: { answers: AduAnswers; 
   };
 
   return (
-    <StepCard step={0} total={0} icon={Send} title="Your package is ready to file" subtitle="Download it, sign it, and file it with the city yourself." onBack={onBack} wide>
+    <StepCard step={0} total={0} icon={Send} title="Your package is complete" subtitle="Download it, sign it, and file it with the City of Newport Beach." onBack={onBack} wide>
       <div className="space-y-8">
-        <p className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-sm leading-snug text-neutral-300">
-          AutoADU doesn&apos;t file anything with the City of Newport Beach. You (or your designer) file the package with the city, following
-          the steps below. Track it in the city&apos;s{" "}
-          <a className={linkClass} href={CITY.portal} target="_blank" rel="noreferrer">
-            CiViC portal
-          </a>
-          .
-        </p>
+        <div className="space-y-2">
+          <div className="rounded-2xl border border-sky-400/30 bg-sky-400/[0.07] p-4" role="status">
+            <div className="flex items-start gap-3">
+              <Clock3 className="mt-0.5 size-6 shrink-0 text-sky-300" />
+              <div className="min-w-0">
+                <p className="text-[18px] font-semibold text-white">Waiting for approval</p>
+                <p className="mt-0.5 text-sm text-neutral-400">City of Newport Beach</p>
+              </div>
+            </div>
+            <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+              {[
+                ["Address", answers.address],
+                ["ADU type", ADU_LABEL[answers.aduType]],
+                ["Size", `${answers.squareFeet.toLocaleString("en-US")} sq ft`],
+                ["Date", today],
+              ].map(([k, v]) => (
+                <div key={k} className="min-w-0">
+                  <dt className="text-xs text-neutral-500">{k}</dt>
+                  <dd className="break-words text-white">{v}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+          <p className="text-xs leading-snug text-amber-200/90">
+            {FILING_PREVIEW_NOTE} Track it in the city&apos;s{" "}
+            <a className={linkClass} href={CITY.portal} target="_blank" rel="noreferrer">
+              CiViC portal
+            </a>
+            .
+          </p>
+        </div>
+
+        {todo.length > 0 && (
+          <section>
+            <h2 className="mb-3 flex items-center gap-2 text-[13px] font-semibold tracking-wide text-neutral-400 uppercase">
+              <ListTodo className="size-4" /> Before your permit is issued
+            </h2>
+            <ul className="space-y-2">
+              {todo.map((t) => (
+                <li key={t.text} className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-[14.5px] leading-snug text-neutral-300">
+                  {t.text}
+                  <span className="mt-1 block text-xs text-neutral-500">
+                    Source:{" "}
+                    <a className={linkClass} href={t.source.url} target="_blank" rel="noreferrer">
+                      {t.source.label}
+                    </a>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs text-neutral-500">You don&apos;t need these to file for plan check.</p>
+          </section>
+        )}
 
         <section>
           <h2 className="mb-3 flex items-center gap-2 text-[13px] font-semibold tracking-wide text-neutral-400 uppercase">
@@ -299,7 +401,7 @@ export function SubmitView({ answers, profile, onBack }: { answers: AduAnswers; 
         {forms && forms.length > 0 && (
           <section className="space-y-6">
             <h2 className="flex items-center gap-2 text-[13px] font-semibold tracking-wide text-neutral-400 uppercase">
-              <FileText className="size-4" /> Your filled forms
+              <FileText className="size-4" /> Forms completed
             </h2>
             {forms.map((f) => (
               <div key={f.id}>
@@ -347,7 +449,13 @@ function DownloadRow({ title, label, onClick }: { title: string; label: string; 
   );
 }
 
-function howToFile(a: AduAnswers, r: AduResult, permits: string[], steps: string[]): string {
+export function howToFile(
+  a: AduAnswers,
+  r: AduResult,
+  permits: string[],
+  steps: string[],
+  todo: { text: string; source: { url: string } }[] = [],
+): string {
   const list = (items: string[]) => items.map((s, i) => `${i + 1}. ${s}`).join("\n");
   return [
     "AutoADU: how to file your Newport Beach ADU application",
@@ -367,6 +475,7 @@ function howToFile(a: AduAnswers, r: AduResult, permits: string[], steps: string
     "Fees:",
     list(r.fees.map((f) => `${f.name}: ${f.amount}${f.note ? ` (${f.note})` : ""}`)),
     "",
+    ...(todo.length ? ["Before your permit is issued (not needed for plan check):", list(todo.map((t) => `${t.text} Source: ${t.source.url}`)), ""] : []),
     `Rules checked on ${r.checkedOn}. This is not legal advice. Confirm with the Planning Division, ${CITY.planningPhone}.`,
     "",
   ].join("\n");

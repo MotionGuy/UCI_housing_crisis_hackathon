@@ -22,6 +22,8 @@ export interface AduAnswers {
   bedrooms: number;
   /** New construction only (attached or detached). */
   heightFeet: number | null;
+  /** New construction only: height of the main house, in feet. */
+  houseHeightFeet: number | null;
   /** New construction only: the smaller of the side and rear setbacks. */
   sideRearSetbackFeet: number | null;
   /** Within half a mile walking distance of public transit (a bus stop counts). */

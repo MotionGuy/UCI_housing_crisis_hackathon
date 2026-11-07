@@ -28,7 +28,9 @@ const WORKSHEET = {
   remodelSf: "F[0].P1[0].NumericField5[0]",
   owner: person("38", "39", "40", "41", "42", "43", "44", "45"),
   applicant: person("4", "5", "10", "11", "6", "7", "8", "9"),
-  designer: { last: tf("19"), first: tf("18"), license: tf("20"), email: tf("16"), phone: tf("15") },
+  // Architect/Designer and Engineer rows (tooltips and positions checked against the PDF).
+  designer: pro("19", "18", "20", "17", "12", "13", "14", "16", "15"),
+  engineer: pro("28", "27", "46", "25", "24", "23", "22", "26", "21"),
   contractor: { name: tf("36"), license: tf("35"), email: tf("34"), phone: tf("29") },
 };
 
@@ -99,8 +101,10 @@ export async function fillWorksheet(pdfBytes: ArrayBuffer | Uint8Array, a: AduAn
 
   setPerson(set, WORKSHEET.owner, p.owner);
   setPerson(set, WORKSHEET.applicant, p.applicantIsOwner ? p.owner : p.applicant);
-  setDesigner(set, p.designer);
-  setContractor(set, p.contractor);
+  setPro(set, WORKSHEET.designer, p.designer);
+  setPro(set, WORKSHEET.engineer, p.engineer);
+  // Contractor boxes only for a licensed contractor; owner-builder and "not chosen yet" leave them blank.
+  if (p.builder === "contractor") setContractor(set, p.contractor);
 
   return doc.save();
 }
@@ -172,13 +176,32 @@ function setPerson(set: Setter, f: PersonFields, v: Person) {
   set(f.phone, v.phone);
 }
 
-function setDesigner(set: Setter, v: Professional) {
+function pro(last: string, first: string, license: string, address: string, city: string, state: string, zip: string, email: string, phone: string) {
+  return {
+    last: tf(last),
+    first: tf(first),
+    license: tf(license),
+    address: tf(address),
+    city: tf(city),
+    state: tf(state),
+    zip: tf(zip),
+    email: tf(email),
+    phone: tf(phone),
+  };
+}
+
+/** A designer or engineer row: "First Last" splits into the Last/First boxes (one word goes in Last). */
+function setPro(set: Setter, f: ReturnType<typeof pro>, v: Professional) {
   const [first, ...rest] = v.name.trim().split(/\s+/);
-  set(WORKSHEET.designer.first, rest.length ? first : "");
-  set(WORKSHEET.designer.last, rest.length ? rest.join(" ") : first);
-  set(WORKSHEET.designer.license, v.license);
-  set(WORKSHEET.designer.email, v.email);
-  set(WORKSHEET.designer.phone, v.phone);
+  set(f.first, rest.length ? first : "");
+  set(f.last, rest.length ? rest.join(" ") : first);
+  set(f.license, v.license);
+  set(f.address, v.address);
+  set(f.city, v.city);
+  set(f.state, v.state);
+  set(f.zip, v.zip);
+  set(f.email, v.email);
+  set(f.phone, v.phone);
 }
 
 function setContractor(set: Setter, v: Professional) {
