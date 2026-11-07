@@ -181,8 +181,10 @@ function feesFor(a: AduAnswers): FeeItem[] {
   const f = CITY.fees;
   const fees: FeeItem[] = [f.planCheck, f.buildingPermit];
   if (a.squareFeet > 500) fees.push(f.school);
-  if (a.squareFeet >= STATE.impactFees.exemptBelowSquareFeet) {
+  if (a.squareFeet > STATE.impactFees.exemptBelowSquareFeet) {
     fees.push(f.traffic);
+  } else if (a.squareFeet === STATE.impactFees.exemptBelowSquareFeet) {
+    fees.push({ ...f.traffic, note: "State law allows impact fees from 750 sq ft; the city says these apply over 750 sq ft. Ask the city." });
   } else {
     fees.push({ name: "Impact fees", amount: "$0", note: "State law bans impact fees for ADUs under 750 sq ft." });
   }
@@ -191,14 +193,14 @@ function feesFor(a: AduAnswers): FeeItem[] {
 }
 
 function stepsFor(a: AduAnswers): string[] {
-  const steps = [`Check your address with the city's Address Search Tool (${CITY.addressTool}) to confirm the zoning and whether you're in the Coastal Zone.`];
+  const steps = ["Check your address with the city's Address Search Tool to confirm the zoning and whether you're in the Coastal Zone."];
   if (a.coastalZone !== "no") steps.push("If you're in the Coastal Zone, apply for the Coastal Development Permit first.");
   steps.push(
     `Optional: meet with Planning staff (${CITY.planningPhone}). It isn't required but can save a review round.`,
     a.usingPreapprovedPlan ? "Have the pre-approved plan fitted to your lot." : "Have plans drawn for your ADU.",
     "Gather the documents in the checklist below.",
     `Submit in person at the ${CITY.permitCenter}, and pay the plan check fee.`,
-    `Expect ${CITY.review.typicalRounds} review rounds of ${CITY.review.daysPerRound} days each. Track status in the CiViC portal (${CITY.portal}).`,
+    `Expect ${CITY.review.typicalRounds} review rounds of ${CITY.review.daysPerRound} days each. Track status in the city's CiViC portal.`,
     "When plans are approved, pay the building permit fee and pick up your permits.",
   );
   return steps;

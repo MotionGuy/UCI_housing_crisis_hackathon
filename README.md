@@ -4,28 +4,19 @@ Our team's project for the **AI Impact Lab on affordable homeownership** at **UC
 
 > Local non-profits in affordable housing for low-income families face many challenges. This Impact Lab puts AI to work on the technical challenges that stand in the way. Teams prototype a scalable, repeatable solution that makes owning a home financially sustainable.
 
-## The problem
+## Our project: Clear it
 
-A low-income family that wants to own a home has to solve several problems at the same time:
+**TurboTax for ADU permits in Newport Beach.**
 
-1. **What homes can we get right now?** Listings change every day, and affordable-housing programs (non-profit builds, down-payment assistance, deed-restricted units) are spread across many sites.
-2. **Can we afford it on our current income?** The price is not enough. The family needs the full monthly cost: mortgage, property tax, insurance and HOA, compared with what they earn.
-3. **Can a better job close the gap?** If the home is out of reach, a higher-paying job that matches the family's skills can change the answer.
-4. **Does daily life still work?** The commute to work and to the children's schools must stay within limits the family sets.
+California law gives accessory dwelling units (ADUs) a fast path: if an ADU meets the written rules, the city **must** approve the building permit without a hearing. But each of Orange County's 34 cities has its own forms, fees and checklists, and the state regularly tells cities they've read the law wrongly. Homeowners can't tell if they qualify or what to submit, so the fast path stays rare.
 
-Most tools answer only one of these questions. We treat it as **one multi-level problem**.
+Clear it asks a homeowner a few plain questions, then:
 
-## Our idea
+1. Checks the ADU against Newport Beach's rules and state law, citing each rule.
+2. **Fills out the city's permit forms** (building permit application, and the Coastal Development Permit affidavit when needed) as downloadable PDFs.
+3. Lists what's still needed, the fees, the next steps, and the homeowner's rights under state law, including where the city's own pages contradict the law.
 
-An app where a family enters their income, job, skills, household and commute limits. The app then:
-
-- **Finds available homes**, with a focus on affordable and program-eligible listings.
-- **Checks affordability** for each home against current income (front-end and back-end debt-to-income ratios).
-- **Matches jobs** to the family's skills, ranks the higher-paying ones, and helps them apply.
-- **Checks commutes** from each home to the job and to each child's school against the family's limits.
-- **Combines the results** into a short list: "This home works today", or "This home works if you get one of these jobs".
-
-The full implementation spec goes in [`.plans/`](.plans/). To write it, run `/jmo-workflow:interview` in Claude Code.
+Research and sources: [docs/clear-it-newport.md](docs/clear-it-newport.md). Every city form, with what each one is: [docs/forms/newport-beach/](docs/forms/newport-beach/README.md).
 
 ## Tech stack
 
@@ -54,33 +45,37 @@ Open http://localhost:3000.
 | `npm run start` | Runs the production build |
 | `npm run lint` | Runs ESLint |
 | `npm run typecheck` | Runs the TypeScript compiler without output |
+| `npm run forms:sample` | Fills the city forms with sample data into `sample-forms/` |
 
 ## Project structure
 
 ```
 src/
-  app/
-    page.tsx                 Home page (family intake + results)
-    layout.tsx               Root layout
-    globals.css              Tailwind entry point
-    api/
-      affordability/route.ts POST: affordability for one home
-      housing/route.ts       GET: available homes (agent results or sample data)
-      jobs/route.ts          GET: job matches for a skill set (stub)
-      commute/route.ts       POST: commute times (stub)
-  data/
-    listings.json            Homes found by the research agent
-  lib/
-    types.ts                 Shared types (Household, Listing, Job, ...)
-    affordability.ts         Mortgage and debt-to-income math
-scripts/
-  research-housing.ts        Housing research agent (Claude + web search)
+  app/page.tsx               Home page: the ADU wizard
+  components/wizard/
+    adu-wizard.tsx           The 7 interview steps
+    results.tsx              Verdict, filled-form downloads, checklist, fees, rights
+    ui.tsx                   Card, option rows, inputs (dark design)
+  lib/adu/
+    types.ts                 Interview answers and results
+    state-law.ts             California ADU law limits, with citations
+    newport-beach.ts         Newport Beach rules, documents, fees, links
+    evaluate.ts              Answers in, verdict and checklist out
+  lib/forms/
+    fill.ts                  Fills the city's PDF forms (pdf-lib), field map included
+    types.ts                 Owner, applicant, designer, contractor
+  app/api/adu/check/route.ts POST: run the rule check from another client
+public/forms/newport-beach/  Blank fillable forms the app fills in
 docs/
-  problem-space.md           Notes, research and non-profit contacts
-.plans/                      Specs written by /jmo-workflow:interview
+  clear-it-newport.md        Research: rules, HCD findings, how to submit
+  forms/newport-beach/       Every city form, examples, reference PDFs
+scripts/
+  fill-sample-forms.ts       npm run forms:sample: fills the forms with sample data
+  research-housing.ts        Earlier idea: housing research agent (not used by Clear it)
 ```
 
-Each API route returns stub data, so the frontend can be built at the same time as the backend. Replace each stub with a real data source when it is ready.
+The `api/housing`, `api/jobs`, `api/commute` routes and `lib/affordability.ts` are from our earlier idea and aren't used by Clear it. Delete them if nobody needs them.
+
 
 ## Housing research agent
 
