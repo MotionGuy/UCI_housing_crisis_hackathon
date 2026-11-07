@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, CornerUpRight, type LucideIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight, CircleX, CornerUpRight, ExternalLink, TriangleAlert, type LucideIcon } from "lucide-react";
+import type { Citation } from "@/lib/adu/types";
 
 /** The dark card with progress dashes, hero icon, title and footer buttons. */
 export function StepCard({
@@ -180,9 +181,12 @@ export function TextField({
   autoComplete,
   required,
   className = "",
+  error,
 }: {
   label: string;
   hint?: React.ReactNode;
+  /** Shown under the field in red; also marks the input invalid. */
+  error?: React.ReactNode;
   value: string | number;
   onChange: (v: string) => void;
   placeholder?: string;
@@ -205,9 +209,13 @@ export function TextField({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1.5 h-11 w-full rounded-xl border border-white/10 bg-black/30 px-3.5 text-[15px] text-white placeholder:text-neutral-600 transition outline-none focus:border-accent/60 focus:ring-4 focus:ring-accent/10"
+        aria-invalid={error ? true : undefined}
+        className={`mt-1.5 h-11 w-full rounded-xl border bg-black/30 px-3.5 text-[15px] text-white placeholder:text-neutral-600 transition outline-none focus:ring-4 ${
+          error ? "border-red-500/60 focus:border-red-400 focus:ring-red-500/15" : "border-white/10 focus:border-accent/60 focus:ring-accent/10"
+        }`}
       />
       {hint && <span className="mt-1.5 block text-xs leading-snug text-neutral-500">{hint}</span>}
+      {error}
     </label>
   );
 }
@@ -263,3 +271,49 @@ export function Toggle({ label, checked, onChange }: { label: string; checked: b
 }
 
 export const linkClass = "text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent";
+
+/** A rules-engine message under a field: red blocks Continue, amber is a warning. */
+export function IssueNote({
+  tone,
+  title,
+  message,
+  limit,
+  citation,
+}: {
+  tone: "error" | "warning";
+  title?: string;
+  message: string;
+  limit?: string;
+  citation?: Citation;
+}) {
+  const error = tone === "error";
+  const Icon = error ? CircleX : TriangleAlert;
+  return (
+    <span
+      role={error ? "alert" : undefined}
+      className={`mt-2 flex gap-2.5 rounded-xl border p-3 text-[13.5px] leading-snug ${
+        error ? "border-red-500/30 bg-red-500/[0.08] text-red-200" : "border-amber-400/30 bg-amber-400/[0.07] text-amber-100"
+      }`}
+    >
+      <Icon className={`mt-0.5 size-4 shrink-0 ${error ? "text-red-400" : "text-amber-400"}`} />
+      <span className="min-w-0">
+        {title && <span className="font-semibold text-white">{title}: </span>}
+        {message}
+        {limit && <span className={`mt-1 block font-medium ${error ? "text-red-100" : "text-amber-50"}`}>{limit}</span>}
+        {citation && (
+          <span className="mt-1 block text-xs text-neutral-400">
+            Source:{" "}
+            {citation.url ? (
+              <a className={linkClass} href={citation.url} target="_blank" rel="noreferrer">
+                {citation.label}
+                <ExternalLink className="ml-0.5 inline size-3 align-[-1px]" />
+              </a>
+            ) : (
+              citation.label
+            )}
+          </span>
+        )}
+      </span>
+    </span>
+  );
+}

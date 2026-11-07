@@ -1,6 +1,13 @@
 // A made-up Newport Beach ADU application for the live demo (sample data only:
 // the address, names and contacts are fake). The mistakes planted here are the
 // ones in docs/pitch.md § 3; scripts can check each one with evaluateAdu.
+//
+// Demo flow: the intake blocks a step while the rules engine fails one of its
+// values. So the size and setback mistakes are caught live on the "Size it up"
+// step (red, Continue disabled); the presenter types the fixes (900 -> 800,
+// 3 -> 4) and continues. The coastal "not sure" and 17 ft height mistakes are
+// warnings: they show in amber on their steps and on the results page, and
+// "Load fixed version" clears them.
 import type { AduAnswers } from "./types";
 import { EMPTY_PRO, type Profile } from "@/lib/forms/types";
 
@@ -50,10 +57,14 @@ export const demoProfile: Profile = {
   contractor: { ...EMPTY_PRO, name: "Example Builders (demo)", license: "DEMO-1111" },
 };
 
-/** Each planted mistake and the evaluateAdu check that must come back fail or warn. */
+/**
+ * Each planted mistake and the evaluateAdu check that must come back fail or warn.
+ * "size" and "setback" fail, so they block the size step in the intake; "coastal"
+ * and "height" warn, so they show on their steps and the results page without blocking.
+ */
 export const plantedMistakes: { description: string; expectedCheckId: string }[] = [
-  { description: "900 sq ft is over Newport Beach's 850 sq ft limit for a 1-bedroom ADU (fix: 800 sq ft)", expectedCheckId: "size" },
-  { description: "3 ft side/rear setback is under the 4 ft the state guarantees (fix: 4 ft)", expectedCheckId: "setback" },
+  { description: "900 sq ft is over Newport Beach's 850 sq ft limit for a 1-bedroom ADU (fix: 800 sq ft; blocks the size step)", expectedCheckId: "size" },
+  { description: "3 ft side/rear setback is under the 4 ft the state guarantees (fix: 4 ft; blocks the size step)", expectedCheckId: "setback" },
   { description: "Coastal Zone marked \"not sure\" (fix: look up the address in the city's Address Search Tool)", expectedCheckId: "coastal" },
   { description: "17 ft height is above the 16 ft the state guarantees for a detached ADU (fix: 16 ft)", expectedCheckId: "height" },
 ];
