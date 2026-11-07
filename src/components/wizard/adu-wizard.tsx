@@ -16,12 +16,12 @@ import {
 } from "lucide-react";
 import type { AduAnswers, AduType, LotType, YesNoUnsure } from "@/lib/adu/types";
 import { CITY } from "@/lib/adu/newport-beach";
-import { EMPTY_PERSON, EMPTY_PRO, type Person, type Professional, type Profile } from "@/lib/forms/types";
+import { EMPTY_PERSON, EMPTY_PRO, type Builder, type Person, type Professional, type Profile } from "@/lib/forms/types";
 import type { ParcelLookupResult } from "@/lib/parcel/types";
 import { ParcelCard } from "./parcel-card";
 import { AduResultsView } from "./results";
 import { ReviewView, SubmitView } from "./review";
-import { firstBlockedStep, stepIssues, type IssueField, type StepIssue } from "./step-checks";
+import { TEAM_SOURCES, firstBlockedStep, mailingFromProject, stepIssues, type IssueField, type StepIssue } from "./step-checks";
 import { IssueNote, OptionList, Segmented, StepCard, TextField, Toggle, linkClass, type Option } from "./ui";
 
 const STEP_COUNT = 6;
@@ -52,6 +52,8 @@ const INITIAL_PROFILE: Profile = {
   designer: EMPTY_PRO,
   engineer: EMPTY_PRO,
   contractor: EMPTY_PRO,
+  designerIsArchitect: null,
+  builder: null,
 };
 
 const LOTS: Option<LotType>[] = [
@@ -283,7 +285,7 @@ export function AduWizard() {
         <StepCard
           {...common}
           icon={UserRound}
-          title="Tell us about you"
+          title="Personal information"
           subtitle="The property owner, as it appears on the deed."
           onContinue={() => next()}
           continueDisabled={missing.length > 0 || blocked}
@@ -292,7 +294,10 @@ export function AduWizard() {
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField label="First name" required autoComplete="given-name" value={o.firstName} onChange={(v) => setOwner("firstName", v)} />
             <TextField label="Last name" required autoComplete="family-name" value={o.lastName} onChange={(v) => setOwner("lastName", v)} />
-            <TextField className="sm:col-span-2" label="Mailing address" autoComplete="address-line1" value={o.mailingAddress} onChange={(v) => setOwner("mailingAddress", v)} />
+            <div className="sm:col-span-2">
+              <SameAsProject onClick={() => setP((prev) => ({ ...prev, owner: { ...prev.owner, ...mailingFromProject(a, prev) } }))} />
+              <TextField label="Mailing address" autoComplete="address-line1" value={o.mailingAddress} onChange={(v) => setOwner("mailingAddress", v)} />
+            </div>
             <TextField label="City" autoComplete="address-level2" value={o.city} onChange={(v) => setOwner("city", v)} />
             <div className="grid grid-cols-2 gap-4">
               <TextField label="State" autoComplete="address-level1" value={o.state} onChange={(v) => setOwner("state", v)} />
@@ -319,17 +324,33 @@ export function AduWizard() {
     }
 
     default: {
-      const pro = (k: "designer" | "engineer" | "contractor", field: keyof Professional, v: string) =>
-        setP((prev) => ({ ...prev, [k]: { ...prev[k], [field]: v } }));
+      type ProKey = "designer" | "engineer" | "contractor";
+      const pro = (k: ProKey, field: keyof Professional, v: string) => setP((prev) => ({ ...prev, [k]: { ...prev[k], [field]: v } }));
+      // Red border on each empty required input of a group; the message shows once under the group.
+      const missingOf = (f: IssueField) => new Set(issues.errors.find((i) => i.field === f)?.missing ?? []);
+      const designerMissing = missingOf("designer");
+      const engineerMissing = missingOf("engineer");
+      const contractorMissing = missingOf("contractor");
+      const needsEngineer = p.designerIsArchitect === false;
+      const engineerFields = (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <TextField label="Name" required={needsEngineer} invalid={engineerMissing.has("name")} value={p.engineer.name} onChange={(v) => pro("engineer", "name", v)} />
+            <TextField label="License no." required={needsEngineer} invalid={engineerMissing.has("license")} value={p.engineer.license} onChange={(v) => pro("engineer", "license", v)} />
+          </div>
+          <ProContactFields v={p.engineer} required={needsEngineer} missing={engineerMissing} onChange={(f, v) => pro("engineer", f, v)} />
+        </>
+      );
       return (
         <StepCard
           {...common}
           icon={Users}
           title="Your team and budget"
-          subtitle="Optional. Skip it and add these later."
-          onSkip={() => next()}
+          subtitle="Who drew your plans and who will build it. The budget is optional."
           onContinue={() => next()}
           continueLabel="Fill my forms"
+          continueDisabled={blocked}
+          missingHint={blockedHint}
         >
           <div className="space-y-5">
             <TextField
@@ -342,42 +363,122 @@ export function AduWizard() {
             />
             <div>
               <p className="flex items-center gap-2 text-[13px] font-medium text-neutral-300">
-                <FileSignature className="size-4 text-neutral-500" /> Architect or designer
+                <FileSignature className="size-4 text-neutral-500" /> Architect or designer (whoever drew your plans)
               </p>
-              <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                <TextField label="Name" value={p.designer.name} onChange={(v) => pro("designer", "name", v)} />
-                <TextField label="License no." value={p.designer.license} onChange={(v) => pro("designer", "license", v)} />
-              </div>
-              <MoreFields summary="Add contact details and address" defaultOpen={hasContact(p.designer)}>
-                <ProContactFields v={p.designer} onChange={(f, v) => pro("designer", f, v)} />
-              </MoreFields>
-            </div>
-            <div>
-              <p className="flex items-center gap-2 text-[13px] font-medium text-neutral-300">
-                <HardHat className="size-4 text-neutral-500" /> Engineer (if you have one)
-              </p>
-              <MoreFields summary="Add an engineer" defaultOpen={!!p.engineer.name || !!p.engineer.license || hasContact(p.engineer)}>
+              <div className="mt-2 space-y-3">
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <TextField label="Name" value={p.engineer.name} onChange={(v) => pro("engineer", "name", v)} />
-                  <TextField label="License no." value={p.engineer.license} onChange={(v) => pro("engineer", "license", v)} />
+                  <TextField label="Name" required invalid={designerMissing.has("name")} value={p.designer.name} onChange={(v) => pro("designer", "name", v)} />
+                  <TextField
+                    label="License no."
+                    value={p.designer.license}
+                    onChange={(v) => pro("designer", "license", v)}
+                    hint="Leave blank if your designer isn't a licensed architect."
+                  />
                 </div>
-                <ProContactFields v={p.engineer} onChange={(f, v) => pro("engineer", f, v)} />
-              </MoreFields>
+                <ProContactFields v={p.designer} required missing={designerMissing} onChange={(f, v) => pro("designer", f, v)} />
+                <Issues issues={issues} field="designer" only="errors" />
+                <Segmented<"yes" | "no">
+                  label="Is your designer a licensed architect? *"
+                  value={(p.designerIsArchitect === null ? "" : p.designerIsArchitect ? "yes" : "no") as "yes" | "no"}
+                  onChange={(v) => setProfile("designerIsArchitect", v === "yes")}
+                  options={[["yes", "Yes"], ["no", "No"]]}
+                />
+                <p className="text-xs leading-snug text-neutral-500">
+                  A designer doesn&apos;t need a license to draw a single-family home or its ADU (
+                  <a className={linkClass} href={TEAM_SOURCES.unlicensedDesigner.url} target="_blank" rel="noreferrer">
+                    Bus. &amp; Prof. Code § 5537(a)
+                  </a>
+                  ).
+                </p>
+                <Issues issues={issues} field="designerIsArchitect" only="errors" />
+              </div>
             </div>
             <div>
               <p className="flex items-center gap-2 text-[13px] font-medium text-neutral-300">
-                <ShieldCheck className="size-4 text-neutral-500" /> Contractor
+                <HardHat className="size-4 text-neutral-500" /> {needsEngineer ? "Engineer (stamps your plans)" : "Engineer (if you have one)"}
               </p>
-              <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                <TextField label="Name or company" value={p.contractor.name} onChange={(v) => pro("contractor", "name", v)} />
-                <TextField label="License no." value={p.contractor.license} onChange={(v) => pro("contractor", "license", v)} />
-              </div>
+              {needsEngineer ? (
+                <div className="mt-2 space-y-3">
+                  {engineerFields}
+                  <Issues issues={issues} field="engineer" only="errors" />
+                </div>
+              ) : (
+                <>
+                  {p.designerIsArchitect && (
+                    <p className="mt-1 text-xs leading-snug text-neutral-500">Optional. Add an engineer only if one prepared your structural calculations.</p>
+                  )}
+                  <MoreFields summary="Add an engineer" defaultOpen={!!p.engineer.name || !!p.engineer.license || hasContact(p.engineer)}>
+                    {engineerFields}
+                  </MoreFields>
+                </>
+              )}
+            </div>
+            <div className="space-y-3">
+              <p className="flex items-center gap-2 text-[13px] font-medium text-neutral-300">
+                <ShieldCheck className="size-4 text-neutral-500" /> Who will build it?
+              </p>
+              <Segmented<Builder>
+                label="Choose one *"
+                value={p.builder as Builder}
+                onChange={(v) => setProfile("builder", v)}
+                options={[["contractor", "Licensed contractor"], ["owner-builder", "Me (owner-builder)"], ["undecided", "Not chosen yet"]]}
+              />
+              <Issues issues={issues} field="builder" only="errors" />
+              {p.builder === "contractor" && (
+                <>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <TextField label="Name or company" required invalid={contractorMissing.has("name")} value={p.contractor.name} onChange={(v) => pro("contractor", "name", v)} />
+                    <TextField label="License no." required invalid={contractorMissing.has("license")} value={p.contractor.license} onChange={(v) => pro("contractor", "license", v)} hint="California contractor's license (CSLB)" />
+                    <TextField label="Email" type="email" required invalid={contractorMissing.has("email")} value={p.contractor.email} onChange={(v) => pro("contractor", "email", v)} hint="Use the email on their CiViC account" />
+                    <TextField label="Phone" type="tel" required invalid={contractorMissing.has("phone")} value={p.contractor.phone} onChange={(v) => pro("contractor", "phone", v)} />
+                  </div>
+                  <Issues issues={issues} field="contractor" only="errors" />
+                </>
+              )}
+              {p.builder === "owner-builder" && (
+                <InfoNote citation={TEAM_SOURCES.ownerBuilderForm}>
+                  You&apos;ll sign the city&apos;s Owner-Builder Acknowledgement form and show your driver&apos;s license (or a notarized form) when the permit is issued. You also need your own CiViC account.
+                </InfoNote>
+              )}
+              {p.builder === "undecided" && (
+                <InfoNote citation={TEAM_SOURCES.licenseBeforePermit}>
+                  You can submit for plan check without a contractor. Before the city issues your permit, you&apos;ll need to add a licensed contractor (with license number and a CiViC account email) or sign up as an owner-builder.
+                </InfoNote>
+              )}
             </div>
           </div>
         </StepCard>
       );
     }
   }
+}
+
+/** Small secondary button that copies the project address into a mailing address (the user can still edit it). */
+function SameAsProject({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="mb-2 flex h-8 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 text-xs text-neutral-300 transition hover:bg-white/[0.06]"
+    >
+      <MapPin className="size-3.5" /> Same as project address
+    </button>
+  );
+}
+
+/** A neutral note with its source (not a problem; never blocks). */
+function InfoNote({ children, citation }: { children: React.ReactNode; citation: { label: string; url: string } }) {
+  return (
+    <p className="rounded-xl border border-sky-400/25 bg-sky-400/[0.06] p-3 text-[13.5px] leading-snug text-sky-100">
+      {children}
+      <span className="mt-1 block text-xs text-neutral-400">
+        Source:{" "}
+        <a className={linkClass} href={citation.url} target="_blank" rel="noreferrer">
+          {citation.label}
+        </a>
+      </span>
+    </p>
+  );
 }
 
 /** True when any optional contact or address field of a designer/engineer is filled. */
@@ -399,17 +500,28 @@ function MoreFields({ summary, defaultOpen, children }: { summary: string; defau
   );
 }
 
-/** Email, phone and office address of a designer or engineer. All optional. */
-function ProContactFields({ v, onChange }: { v: Professional; onChange: (field: keyof Professional, value: string) => void }) {
+/** Email, phone and office address of a designer or engineer. `missing` marks empty required inputs red. */
+function ProContactFields({
+  v,
+  required,
+  missing,
+  onChange,
+}: {
+  v: Professional;
+  required?: boolean;
+  missing?: Set<keyof Professional>;
+  onChange: (field: keyof Professional, value: string) => void;
+}) {
+  const bad = (k: keyof Professional) => !!missing?.has(k);
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      <TextField label="Email" type="email" value={v.email} onChange={(x) => onChange("email", x)} />
-      <TextField label="Phone" type="tel" value={v.phone} onChange={(x) => onChange("phone", x)} />
-      <TextField className="sm:col-span-2" label="Office address" value={v.address ?? ""} onChange={(x) => onChange("address", x)} />
-      <TextField label="City" value={v.city ?? ""} onChange={(x) => onChange("city", x)} />
+      <TextField label="Email" type="email" required={required} invalid={bad("email")} value={v.email} onChange={(x) => onChange("email", x)} />
+      <TextField label="Phone" type="tel" required={required} invalid={bad("phone")} value={v.phone} onChange={(x) => onChange("phone", x)} />
+      <TextField className="sm:col-span-2" label="Office address" required={required} invalid={bad("address")} value={v.address ?? ""} onChange={(x) => onChange("address", x)} />
+      <TextField label="City" required={required} invalid={bad("city")} value={v.city ?? ""} onChange={(x) => onChange("city", x)} />
       <div className="grid grid-cols-2 gap-3">
-        <TextField label="State" value={v.state ?? ""} onChange={(x) => onChange("state", x)} />
-        <TextField label="ZIP" inputMode="numeric" value={v.zip ?? ""} onChange={(x) => onChange("zip", x)} />
+        <TextField label="State" required={required} invalid={bad("state")} value={v.state ?? ""} onChange={(x) => onChange("state", x)} />
+        <TextField label="ZIP" inputMode="numeric" required={required} invalid={bad("zip")} value={v.zip ?? ""} onChange={(x) => onChange("zip", x)} />
       </div>
     </div>
   );

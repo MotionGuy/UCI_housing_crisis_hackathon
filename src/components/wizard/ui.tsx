@@ -182,11 +182,14 @@ export function TextField({
   required,
   className = "",
   error,
+  invalid,
 }: {
   label: string;
   hint?: React.ReactNode;
   /** Shown under the field in red; also marks the input invalid. */
   error?: React.ReactNode;
+  /** Marks the input red without a message (the message shows once under its group). */
+  invalid?: boolean;
   value: string | number;
   onChange: (v: string) => void;
   placeholder?: string;
@@ -209,9 +212,9 @@ export function TextField({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        aria-invalid={error ? true : undefined}
+        aria-invalid={error || invalid ? true : undefined}
         className={`mt-1.5 h-11 w-full rounded-xl border bg-black/30 px-3.5 text-[15px] text-white placeholder:text-neutral-600 transition outline-none focus:ring-4 ${
-          error ? "border-red-500/60 focus:border-red-400 focus:ring-red-500/15" : "border-white/10 focus:border-accent/60 focus:ring-accent/10"
+          error || invalid ? "border-red-500/60 focus:border-red-400 focus:ring-red-500/15" : "border-white/10 focus:border-accent/60 focus:ring-accent/10"
         }`}
       />
       {hint && <span className="mt-1.5 block text-xs leading-snug text-neutral-500">{hint}</span>}
@@ -241,7 +244,7 @@ export function Segmented<T extends string>({
             type="button"
             aria-pressed={value === v}
             onClick={() => onChange(v)}
-            className={`h-9 flex-1 rounded-lg text-sm transition ${
+            className={`min-h-9 flex-1 rounded-lg px-1.5 py-1 text-sm leading-tight transition ${
               value === v ? "bg-white/10 font-medium text-white" : "text-neutral-400 hover:text-neutral-200"
             }`}
           >

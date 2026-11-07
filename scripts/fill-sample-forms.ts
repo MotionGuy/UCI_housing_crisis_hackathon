@@ -64,7 +64,9 @@ const profile: Profile = {
     state: "CA",
     zip: "92626",
   },
-  contractor: { name: "Example Builders Inc", license: "0000000", email: "", phone: "" },
+  designerIsArchitect: false, // so the engineer below is required
+  contractor: { name: "Example Builders Inc", license: "0000000", email: "build@example.com", phone: "(949) 555-0133" },
+  builder: "contractor", // contractor boxes are filled only for a licensed contractor
 };
 
 async function main() {

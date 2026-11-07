@@ -103,7 +103,8 @@ export async function fillWorksheet(pdfBytes: ArrayBuffer | Uint8Array, a: AduAn
   setPerson(set, WORKSHEET.applicant, p.applicantIsOwner ? p.owner : p.applicant);
   setPro(set, WORKSHEET.designer, p.designer);
   setPro(set, WORKSHEET.engineer, p.engineer);
-  setContractor(set, p.contractor);
+  // Contractor boxes only for a licensed contractor; owner-builder and "not chosen yet" leave them blank.
+  if (p.builder === "contractor") setContractor(set, p.contractor);
 
   return doc.save();
 }

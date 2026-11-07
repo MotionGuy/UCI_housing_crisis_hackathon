@@ -58,9 +58,22 @@ export const demoProfile: Profile = {
   apn: "000-000-00 (demo)",
   zoningDistrict: "R-1",
   valuation: 0, // the wizard fills in the $300/sq ft estimate
-  designer: { ...EMPTY_PRO, name: "Demo Design Studio", license: "DEMO-0000" },
+  // Made-up designer (docs/pitch.md typing table). A licensed architect, so no engineer is required.
+  designer: {
+    name: "Dana Designer",
+    license: "C-00000 (demo)",
+    email: "dana@example.com",
+    phone: "(555) 010-0145",
+    address: "500 Sample Ave",
+    city: "Irvine",
+    state: "CA",
+    zip: "92618",
+  },
+  designerIsArchitect: true,
   engineer: EMPTY_PRO,
-  contractor: { ...EMPTY_PRO, name: "Example Builders (demo)", license: "DEMO-1111" },
+  // "Not chosen yet": fewest fields to type; contractor boxes stay blank on the form.
+  builder: "undecided",
+  contractor: EMPTY_PRO,
 };
 
 /**

@@ -140,6 +140,20 @@ Local copies of every form, with what each one is: [forms/newport-beach/](forms/
    - Utility fees vary. The [OC ADU calculator](https://occog.aducalculator.org) estimates the total.
 7. **Review:** 10–20 days per round, and most projects need 2–3 rounds. Permitting takes 1–6 months; the whole project usually 12–18 months.
 
+### Designer, engineer and contractor: what's required when
+
+Checked November 7, 2026. The app turns these into form-completeness checks on the team step (`src/components/wizard/step-checks.ts`), not rules-engine checks.
+
+| Who | When | Required? | Source |
+|---|---|---|---|
+| **Designer** (whoever drew the plans) | Plan check submittal | **Yes:** name, address and phone on every plan sheet. The app also asks for email and the office city/state/ZIP for the permit form. | City, [Requirements for Submittal for Residential Additions and New Construction (9-2014)](https://www.newportbeachca.gov/home/showpublisheddocument/3225/636089393638270000): "Name, address, phone number of individual who prepared plans on each sheet" |
+| Designer's license | — | **No.** An unlicensed designer may prepare plans for a single-family home (and its ADU). | [Cal. Bus. & Prof. Code § 5537(a)](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=5537) |
+| **Engineer** | Plan check submittal | **Only if the designer is not a licensed architect:** a licensed engineer must stamp the plans. Otherwise optional (e.g. structural calculations). | [Newport Beach ADU: Design](https://www.newportbeachadu.org/design): "If you do not use a licensed architect, your plans will need to be stamped by a licensed engineer."; also the ADU Guidebook Exercises, p. 11 (`forms/newport-beach/reference/adu-guidebook-exercises-2025-10-31.pdf`) |
+| **Contractor** (license no., CiViC account email) | Permit **issuance** | Before the permit is issued: a licensed contractor's license statement, or an owner-builder exemption. | [Cal. Bus. & Prof. Code § 7031.5](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=7031.5): the license statement is "a condition precedent to the issuance of a permit"; [2025 Building Permit Application](https://www.newportbeachca.gov/home/showpublisheddocument/3258/638824129709970000): "Licensed Contractors and Owner/Builders are required to have a Civic account in order to obtain a building permit." |
+| **Owner-builder** | Permit **issuance** | Sign the city's Owner-Builder Acknowledgement (initial each item) and show a driver's license, or a notarized form; own CiViC account. | City, [Owner-Builder Acknowledgement form](https://www.newportbeachca.gov/home/showpublisheddocument/3204/638624191827970000): "We will not issue a building permit until you have read, initialed your understanding of each provision, signed, and returned this form…"; CiViC: 2025 form above |
+
+**Inference (not stated by any city page):** the contractor may be left blank at plan check. We read this from § 7031.5 (license due at permit issuance) and the 2025 form's required-field stars; no Newport page says it outright. Confirm with the Permit Center. The app therefore offers "Not chosen yet", leaves the contractor boxes blank, and lists the issuance-time to-dos on the final page.
+
 ## Permits by zone and location
 
 Checked November 7, 2026, in the current municipal code on [ecode360](https://ecode360.com/50137802) (Title 20) and [ecode360](https://ecode360.com/50143808) (Title 21, Coastal). The app looks these facts up from the address (see "Address lookup" below).

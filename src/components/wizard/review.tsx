@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ClipboardCheck, Clock3, Download, FileText, LoaderCircle, PencilLine, Send } from "lucide-react";
+import { ClipboardCheck, Clock3, Download, FileText, ListTodo, LoaderCircle, PencilLine, Send } from "lucide-react";
 import { CITY } from "@/lib/adu/newport-beach";
 import type { AduAnswers, AduResult } from "@/lib/adu/types";
 import { describeWork } from "@/lib/forms/fill";
-import type { FilledForm, Person, Professional, Profile } from "@/lib/forms/types";
+import type { Builder, FilledForm, Person, Professional, Profile } from "@/lib/forms/types";
 import { PdfPreview, useFilledForms } from "./form-preview";
 import { CheckRow, StatusBanner, combineResults, issuesOf } from "./results";
+import { TEAM_SOURCES } from "./step-checks";
 import { StepCard, linkClass } from "./ui";
 
 /** Wizard step that sets each value (see AduWizard). */
@@ -101,8 +102,22 @@ export function autofillPreview(a: AduAnswers, p: Profile, valuationEstimated: b
         ...person("Owner", p.owner),
         ...person("Applicant", applicant, sameAsOwner),
         ...pro("Architect / designer", p.designer),
+        {
+          label: "Designer is a licensed architect",
+          value: p.designerIsArchitect === null ? "" : p.designerIsArchitect ? "Yes" : "No",
+          step: STEPS.team,
+          note: p.designerIsArchitect === false ? "Not on the form. A licensed engineer must stamp your plans." : "Not on the form. Tells AutoADU whether an engineer is required.",
+        },
         ...(hasEngineer ? pro("Engineer", p.engineer) : []),
-        ...pro("Contractor", p.contractor),
+        {
+          label: "Who will build it",
+          value: p.builder ? BUILDER_LABEL[p.builder] : "",
+          step: STEPS.team,
+          note: "Not on the form. The contractor rows are filled only for a licensed contractor.",
+        },
+        ...(p.builder === "contractor"
+          ? pro("Contractor", p.contractor)
+          : [{ label: "Contractor", value: "", step: STEPS.team, note: "Left blank until you choose a licensed contractor. See \"Before your permit is issued\"." }]),
       ],
     },
   ];
@@ -239,6 +254,35 @@ export function ReviewView({
   );
 }
 
+export const BUILDER_LABEL: Record<Builder, string> = {
+  contractor: "Licensed contractor",
+  "owner-builder": "Me (owner-builder)",
+  undecided: "Not chosen yet",
+};
+
+/** To-dos due when the city issues the permit (not blockers for plan check). Empty for a licensed contractor. */
+export function beforeIssuance(p: Profile): { text: string; source: { label: string; url: string } }[] {
+  if (p.builder === "owner-builder") {
+    return [
+      {
+        text: "Sign the city's Owner-Builder Acknowledgement form (initial each item) and show your driver's license, or bring a notarized form.",
+        source: TEAM_SOURCES.ownerBuilderForm,
+      },
+      { text: "Create your own CiViC account. Owner-builders need one to get the building permit.", source: TEAM_SOURCES.civicAccount },
+    ];
+  }
+  if (p.builder === "undecided" || p.builder === null) {
+    return [
+      {
+        text: "Add a licensed contractor (name, license number, and the email on their CiViC account), or sign the city's Owner-Builder Acknowledgement form to build it yourself.",
+        source: TEAM_SOURCES.licenseBeforePermit,
+      },
+      { text: "Whoever builds it (your contractor, or you as owner-builder) needs a CiViC account.", source: TEAM_SOURCES.civicAccount },
+    ];
+  }
+  return [];
+}
+
 const ADU_LABEL: Record<AduAnswers["aduType"], string> = {
   detached: "Detached ADU",
   attached: "Attached ADU",
@@ -260,7 +304,8 @@ export function SubmitView({ answers, profile, onBack }: { answers: AduAnswers; 
   const { forms, error, updating } = useFilledForms(answers, profile);
   const today = useMemo(() => new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }), []);
 
-  const summary = useMemo(() => howToFile(answers, result, permits, steps), [answers, result, permits, steps]);
+  const todo = useMemo(() => beforeIssuance(profile), [profile]);
+  const summary = useMemo(() => howToFile(answers, result, permits, steps, todo), [answers, result, permits, steps, todo]);
   const downloadSummary = () => save(new Blob([summary], { type: "text/plain" }), "newport-beach-adu-how-to-file.txt");
   const downloadAll = () => {
     forms?.forEach(download);
@@ -301,6 +346,28 @@ export function SubmitView({ answers, profile, onBack }: { answers: AduAnswers; 
             .
           </p>
         </div>
+
+        {todo.length > 0 && (
+          <section>
+            <h2 className="mb-3 flex items-center gap-2 text-[13px] font-semibold tracking-wide text-neutral-400 uppercase">
+              <ListTodo className="size-4" /> Before your permit is issued
+            </h2>
+            <ul className="space-y-2">
+              {todo.map((t) => (
+                <li key={t.text} className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-[14.5px] leading-snug text-neutral-300">
+                  {t.text}
+                  <span className="mt-1 block text-xs text-neutral-500">
+                    Source:{" "}
+                    <a className={linkClass} href={t.source.url} target="_blank" rel="noreferrer">
+                      {t.source.label}
+                    </a>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs text-neutral-500">You don&apos;t need these to file for plan check.</p>
+          </section>
+        )}
 
         <section>
           <h2 className="mb-3 flex items-center gap-2 text-[13px] font-semibold tracking-wide text-neutral-400 uppercase">
@@ -382,7 +449,13 @@ function DownloadRow({ title, label, onClick }: { title: string; label: string; 
   );
 }
 
-export function howToFile(a: AduAnswers, r: AduResult, permits: string[], steps: string[]): string {
+export function howToFile(
+  a: AduAnswers,
+  r: AduResult,
+  permits: string[],
+  steps: string[],
+  todo: { text: string; source: { url: string } }[] = [],
+): string {
   const list = (items: string[]) => items.map((s, i) => `${i + 1}. ${s}`).join("\n");
   return [
     "AutoADU: how to file your Newport Beach ADU application",
@@ -402,6 +475,7 @@ export function howToFile(a: AduAnswers, r: AduResult, permits: string[], steps:
     "Fees:",
     list(r.fees.map((f) => `${f.name}: ${f.amount}${f.note ? ` (${f.note})` : ""}`)),
     "",
+    ...(todo.length ? ["Before your permit is issued (not needed for plan check):", list(todo.map((t) => `${t.text} Source: ${t.source.url}`)), ""] : []),
     `Rules checked on ${r.checkedOn}. This is not legal advice. Confirm with the Planning Division, ${CITY.planningPhone}.`,
     "",
   ].join("\n");
