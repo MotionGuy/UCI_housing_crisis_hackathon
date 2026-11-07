@@ -54,15 +54,16 @@ export function AduResultsView({
   profile,
   onEdit,
   onReview,
-  onLoadFixed,
 }: {
   answers: AduAnswers;
   profile: Profile;
+  /**
+   * Back to the intake. Shown only when this page is a dead end (no review possible);
+   * otherwise edits happen from the review screen's Change buttons, so there's no Back.
+   */
   onEdit: () => void;
   /** Goes to the review screen; blocked while any check fails. */
   onReview?: () => void;
-  /** Shown after the demo is loaded: swaps in the fixed demo application. */
-  onLoadFixed?: () => void;
 }) {
   const { result, parcelEval, checks, notAllowed } = useMemo(() => combineResults(answers, profile), [answers, profile]);
   const outOfScope = result.verdict === "out-of-scope";
@@ -90,7 +91,7 @@ export function AduResultsView({
       icon={hero.icon}
       title={notAllowed ? "An ADU isn't allowed on this lot" : result.headline}
       subtitle={notAllowed ? blocker?.detail : result.summary}
-      onBack={onEdit}
+      onBack={outOfScope || notAllowed || fails.length > 0 ? onEdit : undefined}
       onContinue={outOfScope || notAllowed ? undefined : onReview}
       continueLabel="Review and submit"
       continueDisabled={fails.length > 0}
@@ -104,15 +105,6 @@ export function AduResultsView({
             <p className="text-xs text-neutral-500">
               Not legal advice. Rules checked on {result.checkedOn}. Confirm with the City of Newport Beach before you submit.
             </p>
-            {onLoadFixed && (
-              <button
-                type="button"
-                onClick={onLoadFixed}
-                className="h-9 rounded-xl border border-dashed border-white/15 px-3 text-[13px] font-medium text-neutral-300 transition hover:bg-white/[0.06]"
-              >
-                Load fixed version (demo)
-              </button>
-            )}
           </div>
 
           {profile.parcel && (

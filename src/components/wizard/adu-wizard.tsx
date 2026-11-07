@@ -4,10 +4,10 @@ import { useMemo, useState } from "react";
 import {
   DoorOpen,
   FileSignature,
+  HardHat,
   House,
   HousePlus,
   MapPin,
-  PlayCircle,
   Ruler,
   ShieldCheck,
   UserRound,
@@ -15,9 +15,8 @@ import {
   Warehouse,
 } from "lucide-react";
 import type { AduAnswers, AduType, LotType, YesNoUnsure } from "@/lib/adu/types";
-import { demoAnswers, demoProfile, fixedAnswers } from "@/lib/adu/demo-application";
 import { CITY } from "@/lib/adu/newport-beach";
-import { EMPTY_PERSON, EMPTY_PRO, type Person, type Profile } from "@/lib/forms/types";
+import { EMPTY_PERSON, EMPTY_PRO, type Person, type Professional, type Profile } from "@/lib/forms/types";
 import type { ParcelLookupResult } from "@/lib/parcel/types";
 import { ParcelCard } from "./parcel-card";
 import { AduResultsView } from "./results";
@@ -51,6 +50,7 @@ const INITIAL_PROFILE: Profile = {
   zoningDistrict: "",
   valuation: 0,
   designer: EMPTY_PRO,
+  engineer: EMPTY_PRO,
   contractor: EMPTY_PRO,
 };
 
@@ -73,7 +73,6 @@ export function AduWizard() {
   const [view, setView] = useState<"intake" | "results" | "review" | "submit">("intake");
   /** Set when a step was opened from the review screen; Continue goes back there. */
   const [returnToReview, setReturnToReview] = useState(false);
-  const [demoLoaded, setDemoLoaded] = useState(false);
 
   // The $300/sq ft valuation is an estimate (no city source); the review screen labels it.
   const formProfile = useMemo(() => ({ ...p, valuation: p.valuation || a.squareFeet * 300 }), [p, a.squareFeet]);
@@ -82,19 +81,8 @@ export function AduWizard() {
   const setProfile = <K extends keyof Profile>(k: K, v: Profile[K]) => setP((prev) => ({ ...prev, [k]: v }));
   const setOwner = (k: keyof Person, v: string) => setP((prev) => ({ ...prev, owner: { ...prev.owner, [k]: v } }));
 
-  // "manual": the demo is loaded, so Continue skips the lookup and shows the zoning/APN fields.
-  const [lookup, setLookup] = useState<{ status: "idle" | "loading" | "found" | "error" | "manual"; message?: string }>({ status: "idle" });
-
-  /**
-   * Fills every answer from the demo application; the presenter then clicks Continue through.
-   * The demo is made-up data: it skips the address lookup, and setP(demoProfile) clears any parcel from an earlier lookup.
-   */
-  const loadDemo = (answers: AduAnswers) => {
-    setA(answers);
-    setP(demoProfile);
-    setLookup({ status: "manual" });
-    setDemoLoaded(true);
-  };
+  // "error": the lookup failed, so the user continues by hand (zoning/APN fields shown).
+  const [lookup, setLookup] = useState<{ status: "idle" | "loading" | "found" | "error"; message?: string }>({ status: "idle" });
 
   // Rules-engine problems for the fields on this step: errors block Continue, warnings don't.
   const issues = useMemo(() => stepIssues(step, a, p), [step, a, p]);
@@ -164,15 +152,6 @@ export function AduWizard() {
       <AduResultsView
         answers={a}
         profile={formProfile}
-        onLoadFixed={
-          demoLoaded
-            ? () => {
-                setA(fixedAnswers);
-                setProfile("parcel", undefined); // the demo address has no parcel
-                setLookup({ status: "manual" });
-              }
-            : undefined
-        }
         onReview={() => setView("review")}
         onEdit={() => {
           setView("intake");
@@ -208,20 +187,18 @@ export function AduWizard() {
     case 0: {
       const found = lookup.status === "found" && p.parcel;
       const failed = lookup.status === "error";
-      const manual = failed || lookup.status === "manual";
       return (
         <StepCard
           {...common}
           icon={MapPin}
           title="Where's your property?"
           subtitle="We'll look up its zoning, parcel number and Coastal Zone status in the city's map."
-          onContinue={found || manual ? () => next() : findProperty}
-          continueLabel={found || lookup.status === "manual" ? "Continue" : failed ? "Continue by hand" : lookup.status === "loading" ? "Looking up…" : "Find my property"}
+          onContinue={found || failed ? () => next() : findProperty}
+          continueLabel={found ? "Continue" : failed ? "Continue by hand" : lookup.status === "loading" ? "Looking up…" : "Find my property"}
           continueDisabled={!a.address.trim() || lookup.status === "loading" || blocked}
           missingHint={lookup.status === "loading" ? undefined : blocked ? "This lot doesn't qualify for the ADU fast path. Check the address." : "Add the property address to continue."}
         >
           <div className="space-y-4">
-            <DemoBar onLoad={loadDemo} loaded={demoLoaded} />
             <TextField label="Property address" required autoComplete="street-address" placeholder="123 Example St, Newport Beach" value={a.address} onChange={changeAddress} />
             {found && <ParcelCard parcel={p.parcel!} />}
             <Issues issues={issues} field="address" />
@@ -229,8 +206,8 @@ export function AduWizard() {
               <p className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-[13.5px] leading-snug text-amber-200">{lookup.message}</p>
             )}
             {/* No lookup: the engine's "coastal" warning (coastalZone "unsure"). Doesn't block. */}
-            {manual && <Issues issues={issues} field="coastalZone" />}
-            {manual && (
+            {failed && <Issues issues={issues} field="coastalZone" />}
+            {failed && (
             <div className="grid gap-4 sm:grid-cols-2">
               <TextField
                 label="Zoning district"
@@ -342,7 +319,7 @@ export function AduWizard() {
     }
 
     default: {
-      const pro = (k: "designer" | "contractor", field: keyof Profile["designer"], v: string) =>
+      const pro = (k: "designer" | "engineer" | "contractor", field: keyof Professional, v: string) =>
         setP((prev) => ({ ...prev, [k]: { ...prev[k], [field]: v } }));
       return (
         <StepCard
@@ -371,6 +348,21 @@ export function AduWizard() {
                 <TextField label="Name" value={p.designer.name} onChange={(v) => pro("designer", "name", v)} />
                 <TextField label="License no." value={p.designer.license} onChange={(v) => pro("designer", "license", v)} />
               </div>
+              <MoreFields summary="Add contact details and address" defaultOpen={hasContact(p.designer)}>
+                <ProContactFields v={p.designer} onChange={(f, v) => pro("designer", f, v)} />
+              </MoreFields>
+            </div>
+            <div>
+              <p className="flex items-center gap-2 text-[13px] font-medium text-neutral-300">
+                <HardHat className="size-4 text-neutral-500" /> Engineer (if you have one)
+              </p>
+              <MoreFields summary="Add an engineer" defaultOpen={!!p.engineer.name || !!p.engineer.license || hasContact(p.engineer)}>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <TextField label="Name" value={p.engineer.name} onChange={(v) => pro("engineer", "name", v)} />
+                  <TextField label="License no." value={p.engineer.license} onChange={(v) => pro("engineer", "license", v)} />
+                </div>
+                <ProContactFields v={p.engineer} onChange={(f, v) => pro("engineer", f, v)} />
+              </MoreFields>
             </div>
             <div>
               <p className="flex items-center gap-2 text-[13px] font-medium text-neutral-300">
@@ -388,19 +380,37 @@ export function AduWizard() {
   }
 }
 
-/** "Load demo application" / "Load fixed version", for the live demo. */
-function DemoBar({ onLoad, loaded }: { onLoad: (a: AduAnswers) => void; loaded: boolean }) {
-  const btn =
-    "flex h-9 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 text-[13px] font-medium text-neutral-200 transition hover:bg-white/[0.07] active:scale-[0.97]";
+/** True when any optional contact or address field of a designer/engineer is filled. */
+function hasContact(v: Professional): boolean {
+  return [v.email, v.phone, v.address, v.city, v.state, v.zip].some((x) => !!x?.trim());
+}
+
+/** Collapsed group of optional fields. Opens by default when it already holds values. */
+function MoreFields({ summary, defaultOpen, children }: { summary: string; defaultOpen: boolean; children: React.ReactNode }) {
+  const [open] = useState(defaultOpen);
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-white/12 p-2.5">
-      <button type="button" className={btn} onClick={() => onLoad(demoAnswers)}>
-        <PlayCircle className="size-4 text-accent" /> Load demo application
-      </button>
-      <button type="button" className={btn} onClick={() => onLoad(fixedAnswers)}>
-        Load fixed version
-      </button>
-      <span className="text-xs text-neutral-500">{loaded ? "Sample data loaded. Click Continue." : "Made-up sample data"}</span>
+    <details className="group mt-2" open={open}>
+      <summary className="cursor-pointer list-none text-[13px] font-medium text-accent hover:underline">
+        <span className="group-open:hidden">+ {summary}</span>
+        <span className="hidden group-open:inline">− {summary}</span>
+      </summary>
+      <div className="mt-3 space-y-3">{children}</div>
+    </details>
+  );
+}
+
+/** Email, phone and office address of a designer or engineer. All optional. */
+function ProContactFields({ v, onChange }: { v: Professional; onChange: (field: keyof Professional, value: string) => void }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <TextField label="Email" type="email" value={v.email} onChange={(x) => onChange("email", x)} />
+      <TextField label="Phone" type="tel" value={v.phone} onChange={(x) => onChange("phone", x)} />
+      <TextField className="sm:col-span-2" label="Office address" value={v.address ?? ""} onChange={(x) => onChange("address", x)} />
+      <TextField label="City" value={v.city ?? ""} onChange={(x) => onChange("city", x)} />
+      <div className="grid grid-cols-2 gap-3">
+        <TextField label="State" value={v.state ?? ""} onChange={(x) => onChange("state", x)} />
+        <TextField label="ZIP" inputMode="numeric" value={v.zip ?? ""} onChange={(x) => onChange("zip", x)} />
+      </div>
     </div>
   );
 }

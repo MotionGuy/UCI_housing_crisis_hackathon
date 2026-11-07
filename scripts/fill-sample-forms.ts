@@ -44,7 +44,26 @@ const profile: Profile = {
   apn: "000-000-00",
   zoningDistrict: "R-1",
   valuation: 225000,
-  designer: { name: "Sam Rivera", license: "C-00000", email: "sam@example.com", phone: "(949) 555-0111" },
+  designer: {
+    name: "Sam Rivera",
+    license: "C-00000",
+    email: "sam@example.com",
+    phone: "(949) 555-0111",
+    address: "500 Sample Ave",
+    city: "Irvine",
+    state: "CA",
+    zip: "92618",
+  },
+  engineer: {
+    name: "Pat Engineer",
+    license: "S-0000",
+    email: "pat@example.com",
+    phone: "(949) 555-0122",
+    address: "700 Example Blvd",
+    city: "Costa Mesa",
+    state: "CA",
+    zip: "92626",
+  },
   contractor: { name: "Example Builders Inc", license: "0000000", email: "", phone: "" },
 };
 

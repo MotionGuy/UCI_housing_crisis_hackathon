@@ -1,9 +1,9 @@
 # AutoADU: pitch and demo script
 
-**Draft 4, 2026-11-07.** Owner: `pitch-storyline` agent.
-**Read-aloud length: 521 spoken words (344 talk track + 177 demo narration) ≈ 4:00 of speech at 130 words/min, about 4:37 with clicks, three typed edits and page loads (inside the 3–5 minute limit).** Words counted with a script on 2026-11-07; they cover only the quoted lines in "Talk track" and the quoted text in the "Presenter says" column. The ~0:35 for clicks and typing is an **Estimate** (8 demo steps, one of them with three typed edits; most lines are spoken while clicking); time it at rehearsal.
+**Draft 5, 2026-11-07.** Owner: `pitch-storyline` agent.
+**Read-aloud length: 479 spoken words (313 talk track + 166 demo narration) ≈ 3:41 of speech at 130 words/min, about 4:41 with clicks, typing and page loads (inside the 3–5 minute limit).** Words counted with a script on 2026-11-07; they cover only the quoted lines in "Talk track" and the quoted text in the "Presenter says" column. The ~1:00 for clicks and typing is an **Estimate**: there are no demo buttons, so the presenter types the sample application (address, four size values, three fixes, owner name and email), speaking over most of it. If the typing doesn't overlap the speech, the run goes to about **5:00 (Estimate)**; then cut section 7 first. Time it at rehearsal.
 
-Status: the demo script follows the app on branch `feat/height-coastal-results` (house-height rule, Coastal Zone from the address lookup, simplified results page, "Finish and download" final page). Screen titles, messages and button labels were read from the code (`src/components/wizard/adu-wizard.tsx`, `step-checks.ts`, `ui.tsx`, `results.tsx`, `review.tsx`, `form-preview.tsx`, `src/lib/adu/demo-application.ts`, `src/lib/adu/evaluate.ts`). Checked against the code, **not yet rehearsed in a browser** (see [Section 8](#8-open-items-and-unverified-claims)).
+Status: the demo script follows the app on branch `feat/height-coastal-results` (house-height rule, Coastal Zone from the address lookup, simplified results page with no Back button, no demo buttons, "Finish and download" final page). Screen titles, messages and button labels were read from the code (`src/components/wizard/adu-wizard.tsx`, `step-checks.ts`, `ui.tsx`, `results.tsx`, `review.tsx`, `form-preview.tsx`, `src/lib/adu/demo-application.ts`, `src/lib/adu/evaluate.ts`). Checked against the code, **not yet rehearsed in a browser** (see [Section 8](#8-open-items-and-unverified-claims)).
 
 Sources are numbered `[S#]` and listed in [Section 7](#7-sources). "Estimate" means a number we made up from stated assumptions, not a measured result.
 
@@ -18,21 +18,21 @@ Sources are numbered `[S#]` and listed in [Section 7](#7-sources). "Estimate" me
 
 ---
 
-## 2. Talk track (target ~4:40)
+## 2. Talk track (target ~4:40, Estimate)
 
 | # | Section | Words | Time |
 |---|---|---|---|
 | 1 | Problem | 62 | 0:29 |
 | 2 | Target market | 30 | 0:14 |
 | 3 | Unique value proposition | 19 | 0:09 |
-| 4 | Live demo | 177 | 1:22 speech + ~0:35 clicks and typing (Estimate) = ~1:57 |
+| 4 | Live demo | 166 | 1:17 speech + ~1:00 clicks and typing (Estimate) = ~2:17 |
 | 5 | Competitive landscape | 49 | 0:23 |
-| 6 | Implementation plan | 77 | 0:36 |
+| 6 | Implementation plan | 46 | 0:21 |
 | 7 | Feasibility | 26 | 0:12 |
 | 8 | Impact | 81 | 0:37 |
-| | **Total** | **521** | **~4:37** |
+| | **Total** | **479** | **~4:41** (Estimate) |
 
-If time runs short, cut in this order: section 7 (Feasibility; the demo already shows sources), then the Implementation plan's last two sentences. Never cut demo steps 3–4 (the live catch) or 7–8 (the filled city form and the final page).
+If time runs short, cut in this order: section 7 (Feasibility; the demo already shows sources), then the last sentence of section 8 ("And the same engine extends …"). Never cut demo steps 3–4 (the live catch) or 7–8 (the filled city form and the final page). Save typing time with the browser's autofill (see presenter notes).
 
 ### 1. Problem
 
@@ -62,7 +62,7 @@ Backing: [Section 4](#4-competitor-table) [S10–S14].
 
 ### 6. Implementation plan
 
-> "Today: Newport single-family ADUs, with two city forms filled in. Next: the other forms an applicant may need, like the plan check checklist and the Coastal Commission's permit application. Then more Orange County cities, SB 9 and small multifamily. The rules move: the state renumbered ADU law in 2024, and Newport changed its rules in 2023 and 2025. Every rule carries its source and the date we checked it, so re-checking is a list, not a rewrite."
+> "Today: Newport single-family ADUs, with two city forms filled in. Next: the plan check checklist and the Coastal Commission's permit application, then more Orange County cities, SB 9 and small multifamily. The rules move, so every rule carries its source and the date we checked it."
 
 Backing: the two forms the app fills today are the building permit worksheet linked from the city's ADU permit page [S1], [S17] and, when the lot is or may be coastal, the Coastal Development Permit owner's affidavit (`src/lib/forms/fill.ts`). **Next-step forms** (the app does **not** fill these yet; named here generically, no fees or numbers): the city's plan check submittal checklist, the California Coastal Commission's CDP application (for lots in the Commission's permit jurisdiction), an owner-builder verification form, a flood-zone substantial-improvement form, and a mechanical/electrical/plumbing plan-review questionnaire. They were identified by the team's forms research (`docs/forms/newport-beach/additional-forms.md` on the research branch, not on `main`); confirm each one before naming it on stage. SB 477 renumbering, March 25, 2024 [S8]; Newport Ordinance 2023-2 and the update adopted August 26, 2025 [S7]. Maintenance: each `Citation` in `src/lib/adu/` has a label and URL, and `CITY.checkedOn` holds the access date. Proposed owner: one team member re-checks every rule each January (state changes) and when the city posts a new ordinance (see Q&A).
 
@@ -80,33 +80,53 @@ Full math: [Section 5](#5-impact-math).
 
 ## 3. Demo script
 
-Run from `main`. Start on the home page (`npm run dev`, then `/`). Use the demo buttons; the only typing is the three fixes in step 4, which **are** the demo (rehearse them).
+Run from `main`. Start on the home page (`npm run dev`, then `/`). **There are no demo buttons: the presenter types the sample application.** The typing in steps 3–4 (the planted mistakes and their fixes) **is** the demo; rehearse it.
 
-**Sample application** (`demoAnswers` and `demoProfile` in `src/lib/adu/demo-application.ts`): made-up owner "Sam Sample" at "123 Example Lane, Newport Beach"; existing single-family lot; **detached, 1-bedroom, 900 sq ft**, **17 ft** tall next to a **16 ft** house, **3 ft** side/rear setback, not near transit, no garage conversion, no pre-approved plan. There is **no Coastal Zone question**: in real use the **Find my property** lookup reads it from the city's map. The demo skips the lookup (made-up address), so **Load demo application** sets Coastal Zone "no", zoning "R-1" and a demo APN, and the button reads **Continue**.
+**Sample application to type** (made up; the same values as `demoAnswers` and `demoProfile` in `src/lib/adu/demo-application.ts`, which the app no longer loads). Keep this list on a sticky note next to the laptop:
+
+| Screen | Field | Type this |
+|---|---|---|
+| "Where's your property?" | Property address | **123 Example Lane, Newport Beach, CA 92663** |
+| "What's on the lot now?" | (click) | **A single-family house** |
+| "Choose your ADU type" | (click) | **Detached ADU** |
+| "Size it up" | Size (sq ft) | **900** (planted mistake; fix to **800**) |
+| | Bedrooms | **1** (already 1) |
+| | ADU height (ft) | **17** (planted mistake; fix to **16**) |
+| | Height of the main house (ft) | **16** |
+| | Side and rear setback (ft) | **3** (planted mistake; fix to **4**) |
+| "Tell us about you" | First name / Last name | **Sam** / **Sample** |
+| | Email | **sam.sample@example.com** |
+| | (optional) Mailing address, City, State, ZIP, Phone | 123 Example Lane, Newport Beach, CA, 92663, (555) 010-0123 |
+| "Your team and budget" | (all optional) | leave blank, click **Fill my forms** |
+
+There is **no Coastal Zone question**: the **Find my property** lookup reads it from the city's map. The made-up address isn't on the map, so the lookup says "We couldn't find that address in Newport Beach. Check the street number and name." (offline: "The lookup didn't work. You can enter the details by hand.") and the button turns into **Continue by hand**. Coastal Zone then stays "not sure": an amber, non-blocking note ("We couldn't confirm whether this lot is in the Coastal Zone. ..."), and the app also fills the Coastal Development Permit owner's affidavit, just in case.
 
 **Where each planted mistake shows up** (read from `step-checks.ts`, `evaluate.ts`): all three are red on the **"Size it up"** step and each one blocks **Continue** until it's fixed.
 
-| # | Planted mistake | Input | Where it's caught | What the screen says | Source shown | Fix |
+| # | Planted mistake | Typed value | Where it's caught | What the screen says | Source shown | Fix |
 |---|---|---|---|---|---|---|
-| 1 | Too big for a 1-bedroom | `squareFeet: 900`, `bedrooms: 1` | **"Size it up", red under Size (sq ft)** | "Newport Beach allows up to 850 sq ft for a studio or 1 bedroom. Yours is 900 sq ft. ..." then "Allowed: up to 850 sq ft for a studio or 1 bedroom. 800 sq ft or less (with 4 ft setbacks) is a detached ADU the city must approve." | "Newport Beach Municipal Code § 20.48.200 (§ 21.48.200 in the Coastal Zone)" [S3], [S7] | Presenter types 800 |
-| 2 | Setback too small | `sideRearSetbackFeet: 3` | **"Size it up", red under Side and rear setback (ft)** | "New ADUs need at least 4 ft from the side and rear property lines. Yours is 3 ft." then "Allowed: 4 ft or more." | Cal. Gov. Code § 66323(a)(2) [S5] | Presenter types 4 |
-| 3 | ADU taller than the house | `heightFeet: 17`, `houseHeightFeet: 16` | **"Size it up", red under ADU height (ft)** | "Your ADU can be at most 16 ft: no taller than your house (16 ft) and never over 25 ft. Yours is 17 ft. Lower the design." then "Allowed: up to 16 ft (no taller than your 16 ft house, never over 25 ft)." An amber "Height" note (above the 16 ft the state guarantees) also shows; it doesn't block | "Cal. Gov. Code § 66321(b)(4)(D) (25 ft cap; 'no taller than the house' is AutoADU's simplified rule)" [S6] | Presenter types 16 |
+| 1 | Too big for a 1-bedroom | Size **900**, Bedrooms **1** | **"Size it up", red under Size (sq ft)** | "Newport Beach allows up to 850 sq ft for a studio or 1 bedroom. Yours is 900 sq ft. ..." then "Allowed: up to 850 sq ft for a studio or 1 bedroom. 800 sq ft or less (with 4 ft setbacks) is a detached ADU the city must approve." | "Newport Beach Municipal Code § 20.48.200 (§ 21.48.200 in the Coastal Zone)" [S3], [S7] | Presenter types 800 |
+| 2 | Setback too small | Setback **3** | **"Size it up", red under Side and rear setback (ft)** | "New ADUs need at least 4 ft from the side and rear property lines. Yours is 3 ft." then "Allowed: 4 ft or more." | Cal. Gov. Code § 66323(a)(2) [S5] | Presenter types 4 |
+| 3 | ADU taller than the house | ADU height **17**, house **16** | **"Size it up", red under ADU height (ft)** | "Your ADU can be at most 16 ft: no taller than your house (16 ft) and never over 25 ft. Yours is 17 ft. Lower the design." then "Allowed: up to 16 ft (no taller than your 16 ft house, never over 25 ft)." An amber "Height" note (above the 16 ft the state guarantees) also shows; it doesn't block | "Cal. Gov. Code § 66321(b)(4)(D) (25 ft cap; 'no taller than the house' is AutoADU's simplified rule)" [S6] | Presenter types 16 |
 
-**After the live fixes** (800 sq ft, 4 ft, 16 ft): this is the same as `fixedAnswers`. Results headline "Qualifies for the fast path"; green banner **"Ready to submit"**, "No rule problems found. Review your forms, then file them with the city."; **"Forms completed"** lists the building permit worksheet (one form, because Coastal Zone is "no"). The results page has no warnings list and no conflict card: reaching results means every step passed. **Load fixed version (demo)** is now only a shortcut (see presenter notes).
+**After the live fixes** (800 sq ft, 4 ft, 16 ft): the same as `fixedAnswers`, except Coastal Zone is "not sure" (no lookup). Results headline "Qualifies for the fast path"; green banner **"Ready to submit"**, "No rule problems found. Review your forms, then file them with the city."; **"Forms completed"** lists two forms: the building permit worksheet and the Owner's Affidavit (Coastal Development Permit), because the Coastal Zone couldn't be confirmed. The results page has **no Back button**: the only way on is **Review and submit**, and any change is made on the review screen with its **Change** buttons.
 
-| Step | Click | Screen shows | Presenter says |
+| Step | Click / type | Screen shows | Presenter says |
 |---|---|---|---|
-| 1 | On the **AutoADU** landing screen, click **Get started**. On "Where's your property?" (step 1 of 6), click **Load demo application**, then **Continue** | Address, zoning "R-1" and APN filled in; "Sample data loaded. Click Continue." | "Here's a homeowner's application, with the mistakes a plan checker sends back: a one-bedroom backyard ADU. The data is made up. For a real address, AutoADU reads the zoning and Coastal Zone from the city's map." |
+| 1 | On the **AutoADU** landing screen, click **Get started**. On "Where's your property?" (step 1 of 6), type the address, click **Find my property**, then **Continue by hand** (leave zoning and APN blank) | Amber "We couldn't find that address …" and the amber Coastal Zone note; zoning and APN fields (optional) | (while typing) "Here's a homeowner's application, with the mistakes a plan checker sends back. The address is made up, so the city's map can't find it; for a real one, AutoADU reads the zoning and Coastal Zone from the map." |
 | 2 | Click **A single-family house** ("What's on the lot now?"), then **Detached ADU** ("Choose your ADU type") | Each pick moves to the next step | (no line; keep clicking) |
-| 3 | "Size it up" loads. Don't click; point at the red notes | Red under **Size (sq ft)**, **ADU height (ft)** and **Side and rear setback (ft)**: the rule, "Allowed: …", and a "Source:" link. **Continue** is disabled: "Fix the values marked in red to continue." | "This is where applications go wrong: nine hundred square feet, three feet from the property line, and seventeen feet tall next to a sixteen-foot house. Normally a plan checker finds that weeks later. AutoADU stops it here, and each error links its source." |
+| 3 | "Size it up": type Size **900**, ADU height **17**, house height **16**, setback **3**. Point at the red notes | Red under **Size (sq ft)**, **ADU height (ft)** and **Side and rear setback (ft)**: the rule, "Allowed: …", and a "Source:" link. **Continue** is disabled: "Fix the values marked in red to continue." | (while typing) "Nine hundred square feet, seventeen feet tall next to a sixteen-foot house, three feet from the property line. Normally a plan checker finds that weeks later. AutoADU stops it here, and each error links its source." |
 | 4 | Select the Size value and type **800**; the setback value, type **4**; the ADU height value, type **16** | Each red note disappears as it's fixed; **Continue** turns on | "Fix it right here: eight hundred, four feet, sixteen feet." |
-| 5 | **Continue**; "Tell us about you": **Continue**; "Your team and budget": **Fill my forms** | Owner Sam Sample; demo designer and contractor | (no line; keep clicking) |
-| 6 | (results page loads) Point at the banner and **"Forms completed"** | Headline "Qualifies for the fast path"; green **"Ready to submit"**; "Forms completed": the building permit worksheet; "Not legal advice. Rules checked on 2026-11-07." | "Ready to submit, and the city's forms are already filled in." |
-| 7 | Click **Review and submit**; scroll past the value list to the embedded form | "Check what we filled in": every value on "Building permit application (Combo Building & Solar worksheet)", each with **Change** or "Set by AutoADU"; below it, the filled PDF | "Before anything leaves, the homeowner checks every value. And this is Newport's real building permit form, already filled in." |
-| 8 | Tick **I checked these and they're correct.**, click **Finish and download** | "Your package is complete": a **"Waiting for approval"** card (address, ADU type, size, date) and right under it, **"Preview of upcoming filing. AutoADU doesn't send forms to the city yet — download your package and file it at the Permit Center or through CiViC."**; then the **PDF** and **How to file (summary)** downloads and "Forms completed" previews | "In the full product, this is where we file with the city for you. Today it's a preview, as the note says: they download the package and file it themselves. We don't just explain the rules; we fill out the city's forms, and one review cycle is the goal." |
+| 5 | **Continue**; "Tell us about you": type **Sam**, **Sample**, **sam.sample@example.com**, **Continue**; "Your team and budget": **Fill my forms** | Owner step's Continue turns on once name and email are in | (no line; keep typing) |
+| 6 | (results page loads) Point at the banner and **"Forms completed"** | Headline "Qualifies for the fast path"; green **"Ready to submit"**; "Forms completed": the building permit worksheet and the CDP owner's affidavit; "Not legal advice. Rules checked on 2026-11-07." No Back button | "Ready to submit, and the city's forms are already filled in." |
+| 7 | Click **Review and submit**; scroll past the value list to the embedded form | "Check what we filled in": every value on each form, each with **Change** or "Set by AutoADU"; below it, the filled PDF | "Before anything leaves, the homeowner checks every value, and can change any of them here. This is Newport's real building permit form, already filled in." |
+| 8 | Tick **I checked these and they're correct.**, click **Finish and download** | "Your package is complete": a **"Waiting for approval"** card (address, ADU type, size, date) and right under it, **"Preview of upcoming filing. AutoADU doesn't send forms to the city yet — download your package and file it at the Permit Center or through CiViC."**; then the **PDF** and **How to file (summary)** downloads and "Forms completed" previews | "In the full product, we file with the city for you. Today it's a preview, as the note says: they download the package and file it themselves. We don't just explain the rules; we fill out the city's forms, and one review cycle is the goal." |
 
 Presenter notes:
-- **Step 4 is live typing on purpose.** Click into the field, select all, type the number. If a field misbehaves, finish clicking through any way you can, then on the results page use **Load fixed version (demo)** (optional shortcut: it loads 800 sq ft, 4 ft, 16 ft). Fallback: the story still shows the catch from step 3.
+- **Prepare the typing.** Before the pitch, either save the sample owner (Sam Sample, 123 Example Lane, Newport Beach, CA 92663, sam.sample@example.com, (555) 010-0123) in the browser's autofill (address and contact fields support it), or have the values on a sticky note. With autofill, step 5 is one click per field; without it, type only the three required values (first name, last name, email).
+- **Steps 3–4 are live typing on purpose.** Click into the field, select all, type the number. The house-height field starts empty, so it shows a red "Enter the main house's height" note until you type 16. If a field misbehaves, retype it; there is no shortcut button. Fallback: the story still shows the catch from step 3, and the backup screenshots cover the rest.
+- **Speak while typing** (steps 1, 3 and 5). The timing below assumes it.
+- **No Back on the results page.** Don't look for it: go on with **Review and submit**; changes happen on the review screen.
 - **Keep the preview note on screen in step 8 and don't say the package was filed.** AutoADU does not send anything to the city; the "Waiting for approval" card shows what the full product will do.
 - The PDF shows inline only at laptop width; at phone width it's a **View the filled form (PDF)** button. Present from a laptop. If the browser won't embed PDFs, use **Open in a new tab** above the preview.
 - Don't click **Download everything** (the browser may ask permission for several downloads). No download is needed: the filled form is already on screen.
@@ -254,17 +274,19 @@ All accessed **2026-11-07** unless noted.
 
 ### Flags for the Context agent
 
+**Draft 5 changes (app):** no "Load demo application" or "Load fixed version" buttons (the presenter types the sample values; the lookup fails on the made-up address, so Coastal Zone is "not sure" and two forms are filled); no Back button on the results page (changes happen on the review screen); the team step can also take the designer's contact details and address and an engineer (optional; the demo leaves it blank). Implementation plan line shortened to fit the typing time.
+
 **Draft 4 changes (app):** the Coastal Zone step is gone (the address lookup answers it; an amber note shows when it can't); a new blocking height check (`height-house`, ADU no taller than the house and never over 25 ft) replaces the old amber 17 ft warning as planted mistake 3; the results page shows "Ready to submit" with no warnings list, no deed conflict card and no "Permits you need" section; the forms section is "Forms completed"; the review button is **Finish and download** and leads to a "Waiting for approval" preview page with downloads. The deed-restriction conflict is now a talking point only.
 
 **Now covered by the app on `main`, removed from this list:** PR #4 merged (demo application, demo buttons, status banners, review screen, Submit step); the missing "Fix:" line (the intake now shows an "Allowed: …" line under each red error); the live catch of planted mistakes during intake; the filled form shown inside the app (review and submit screens).
 
 **Still open:**
-1. **Not rehearsed in a browser; not timed.** This script was checked against the code only. Do one full run-through with a stopwatch, check the two typed edits in step 4 and the inline PDF, and fix any label that differs → `pitch-storyline` + presenter.
+1. **Not rehearsed in a browser; not timed.** This script was checked against the code only. Do one full run-through with a stopwatch (the typing time is an Estimate), check the typed values in steps 1, 3–5 and the inline PDF, and fix any label that differs → `pitch-storyline` + presenter.
 2. **Backup screenshots** of each demo step: the three red errors on "Size it up", "Ready to submit", the review screen with the embedded PDF, and the "Waiting for approval" page with its preview note → whoever rehearses.
 3. **"No taller than the house" is AutoADU's simplified rule**, not a quoted state or city rule (the cited § 66321(b)(4)(D) gives the 25 ft cap for attached ADUs). The app labels it in the source line. Confirm with the team that it's the rule they want blocking → `project-context`.
 4. **Which building permit form ADU applicants should use** (worksheet doc 15043, linked from the ADU site, vs. the May 2025 "Building Permit Application", doc 3258). `docs/project-context.md` marks it resolved (worksheet is current); the Q&A answer still says a teammate is confirming. Reconcile once confirmed → `project-context`.
 5. **No package-completeness checks** (missing documents, plan-set items, coastal sequencing). All planted mistakes are design-standard issues → `rules-checks`.
-6. **The closing shows one city form.** The demo has Coastal Zone "no", so only the building permit worksheet is filled. The CDP affidavit is filled when the lookup puts the lot in the Coastal Zone or can't confirm it → no action unless the team wants both forms in the main path.
+6. **The demo fills two city forms.** The made-up address isn't on the city's map, so Coastal Zone stays "not sure" and the app fills the CDP owner's affidavit as well as the building permit worksheet. Say "the city's forms", not "one form" → no action unless the team wants a real lookup in the demo (needs a real address, against the sample-data rule).
 7. **The results page no longer lists permits or departments** ("Permits you need" was removed as redundant with "Forms completed"; the how-to-file text sheet still lists permits). The pitch doesn't claim departments → `project-context`.
 8. **No AI features built.** The pitch claims none; keep it that way unless they ship.
 9. **Next-step forms research is not on `main`.** If the team wants to name those forms with sources, merge `docs/forms/newport-beach/additional-forms.md` → main session.

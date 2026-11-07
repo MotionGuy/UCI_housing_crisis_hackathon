@@ -5,7 +5,7 @@ import { ClipboardCheck, Clock3, Download, FileText, LoaderCircle, PencilLine, S
 import { CITY } from "@/lib/adu/newport-beach";
 import type { AduAnswers, AduResult } from "@/lib/adu/types";
 import { describeWork } from "@/lib/forms/fill";
-import type { FilledForm, Person, Profile } from "@/lib/forms/types";
+import type { FilledForm, Person, Professional, Profile } from "@/lib/forms/types";
 import { PdfPreview, useFilledForms } from "./form-preview";
 import { CheckRow, StatusBanner, combineResults, issuesOf } from "./results";
 import { StepCard, linkClass } from "./ui";
@@ -41,13 +41,20 @@ export function autofillPreview(a: AduAnswers, p: Profile, valuationEstimated: b
     { label: `${who} email`, value: v.email, step: STEPS.owner, note },
     { label: `${who} phone`, value: v.phone, step: STEPS.owner, note },
   ];
-  const pro = (who: string, v: Profile["designer"]): PreviewField[] =>
+  // Name and license always show (blank = "Left blank"); the optional rows only when filled.
+  const pro = (who: string, v: Professional): PreviewField[] =>
     [
       { label: `${who} name`, value: v.name, step: STEPS.team },
       { label: `${who} license no.`, value: v.license, step: STEPS.team },
+      {
+        label: `${who} office address`,
+        value: [v.address, v.city, [v.state, v.zip].filter(Boolean).join(" ")].filter(Boolean).join(", "),
+        step: STEPS.team,
+      },
       { label: `${who} email`, value: v.email, step: STEPS.team },
       { label: `${who} phone`, value: v.phone, step: STEPS.team },
     ].filter((f) => f.value || f.label.endsWith("name") || f.label.endsWith("license no."));
+  const hasEngineer = Object.values(p.engineer).some((x) => typeof x === "string" && x.trim());
   // Hazard boxes are checked only from the city's GIS (no lookup: left blank).
   const hz = p.parcel?.hazards;
   const hazards = hz
@@ -94,6 +101,7 @@ export function autofillPreview(a: AduAnswers, p: Profile, valuationEstimated: b
         ...person("Owner", p.owner),
         ...person("Applicant", applicant, sameAsOwner),
         ...pro("Architect / designer", p.designer),
+        ...(hasEngineer ? pro("Engineer", p.engineer) : []),
         ...pro("Contractor", p.contractor),
       ],
     },

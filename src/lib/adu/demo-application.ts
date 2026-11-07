@@ -6,8 +6,11 @@
 // values. All three mistakes are caught live on the "Size it up" step (red,
 // Continue disabled): 900 sq ft, a 3 ft setback and a 17 ft ADU next to a 16 ft
 // house. The presenter types the fixes (900 -> 800, 3 -> 4, 17 -> 16) and
-// continues; the results then say "Ready to submit". The demo skips the address
-// lookup, so the Coastal Zone answer is set here ("no").
+// continues; the results then say "Ready to submit". The app has no "load demo"
+// button: the presenter types these values (docs/pitch.md). The made-up address
+// isn't in the city's map, so in the app the lookup fails, the presenter continues
+// by hand and the Coastal Zone stays "unsure" (an amber note, never a block).
+// coastalZone stays "no" here so evaluateAdu checks run without a lookup.
 import type { AduAnswers } from "./types";
 import { EMPTY_PRO, type Profile } from "@/lib/forms/types";
 
@@ -15,7 +18,7 @@ import { EMPTY_PRO, type Profile } from "@/lib/forms/types";
 export const demoAnswers: AduAnswers = {
   address: "123 Example Lane, Newport Beach, CA 92663",
   lotType: "existing-single-family",
-  coastalZone: "no", // the demo skips the address lookup, which normally sets this
+  coastalZone: "no", // in the app this comes from the address lookup ("unsure" when it fails)
   aduType: "detached",
   squareFeet: 900, // mistake: over the 850 sq ft city cap for 1 bedroom
   bedrooms: 1,
@@ -56,6 +59,7 @@ export const demoProfile: Profile = {
   zoningDistrict: "R-1",
   valuation: 0, // the wizard fills in the $300/sq ft estimate
   designer: { ...EMPTY_PRO, name: "Demo Design Studio", license: "DEMO-0000" },
+  engineer: EMPTY_PRO,
   contractor: { ...EMPTY_PRO, name: "Example Builders (demo)", license: "DEMO-1111" },
 };
 

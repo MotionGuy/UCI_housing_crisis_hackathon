@@ -16,6 +16,11 @@ export interface Professional {
   license: string;
   email: string;
   phone: string;
+  /** Office street address (optional; the worksheet has a row for it). */
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
 }
 
 /** Everything about the people and project that goes onto the city forms. */
@@ -30,6 +35,8 @@ export interface Profile {
   /** Estimated construction cost in USD. */
   valuation: number;
   designer: Professional;
+  /** Engineer who stamps the plans, if any (usually structural). */
+  engineer: Professional;
   contractor: Professional;
   /** Facts from the city's GIS, when the address lookup worked. */
   parcel?: ParcelInfo;
@@ -46,7 +53,7 @@ export const EMPTY_PERSON: Person = {
   phone: "",
 };
 
-export const EMPTY_PRO: Professional = { name: "", license: "", email: "", phone: "" };
+export const EMPTY_PRO: Professional = { name: "", license: "", email: "", phone: "", address: "", city: "", state: "", zip: "" };
 
 export interface FilledForm {
   id: string;
