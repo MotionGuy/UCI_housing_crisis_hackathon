@@ -27,6 +27,11 @@ export interface Listing {
   /** True for non-profit, deed-restricted or assistance-eligible homes. */
   affordableProgram: boolean;
   url?: string;
+  /** Filled in by the research agent (scripts/research-housing.ts). */
+  programName?: string | null;
+  eligibility?: string | null;
+  status?: string | null;
+  notes?: string | null;
 }
 
 export interface Job {

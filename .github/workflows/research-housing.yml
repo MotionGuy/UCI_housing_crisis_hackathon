@@ -1,0 +1,38 @@
+name: Housing research agent
+
+# Runs only when started by hand from the Actions tab (no schedule).
+# Needs a repository secret named ANTHROPIC_API_KEY
+# (Settings -> Secrets and variables -> Actions -> New repository secret).
+on:
+  workflow_dispatch:
+    inputs:
+      max_price:
+        description: "Highest price to include"
+        default: "600000"
+
+permissions:
+  contents: write
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run research:housing
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEARCH_MAX_PRICE: ${{ inputs.max_price || '600000' }}
+      - name: Commit new listings
+        run: |
+          git config user.name "housing-research-bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/data/listings.json src/data/research-notes.md
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "Update researched listings"
+          git push

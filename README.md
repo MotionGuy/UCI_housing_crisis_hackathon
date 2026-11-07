@@ -65,18 +65,44 @@ src/
     globals.css              Tailwind entry point
     api/
       affordability/route.ts POST: affordability for one home
-      housing/route.ts       GET: available homes (stub data for now)
+      housing/route.ts       GET: available homes (agent results or sample data)
       jobs/route.ts          GET: job matches for a skill set (stub)
       commute/route.ts       POST: commute times (stub)
+  data/
+    listings.json            Homes found by the research agent
   lib/
     types.ts                 Shared types (Household, Listing, Job, ...)
     affordability.ts         Mortgage and debt-to-income math
+scripts/
+  research-housing.ts        Housing research agent (Claude + web search)
 docs/
   problem-space.md           Notes, research and non-profit contacts
 .plans/                      Specs written by /jmo-workflow:interview
 ```
 
 Each API route returns stub data, so the frontend can be built at the same time as the backend. Replace each stub with a real data source when it is ready.
+
+## Housing research agent
+
+`scripts/research-housing.ts` is an AI agent that finds homes for sale in Orange County by itself. It uses Claude (`claude-opus-5-5`) with web search and web fetch to:
+
+1. Search affordable-homeownership programs (Habitat for Humanity, community land trusts, city below-market-rate programs, HUD homes) and low-priced market listings.
+2. Open each source page and record address, price, bedrooms, HOA, program, eligibility and status.
+3. Save the results to `src/data/listings.json`, and its raw notes to `src/data/research-notes.md`.
+
+`/api/housing` serves these listings automatically. Until the agent has run once, it serves sample data.
+
+**Run it locally** (takes a few minutes; add `ANTHROPIC_API_KEY` to `.env.local` first):
+
+```bash
+npm run research:housing
+```
+
+Change the search with environment variables: `RESEARCH_AREA`, `RESEARCH_MAX_PRICE` (default 600000) and `RESEARCH_LIMIT` (default 25).
+
+**Run it in the background on GitHub:** the workflow in `.github/workflows/research-housing.yml` runs the agent on GitHub's servers and commits the new listings. It has no schedule; it runs only when someone starts it. First add a repository secret named `ANTHROPIC_API_KEY` (**Settings → Secrets and variables → Actions**), then open **Actions → Housing research agent → Run workflow**.
+
+The agent only records homes from pages it opened, but always check the source links before you show a listing in the demo.
 
 ## How we work together
 
