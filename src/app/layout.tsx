@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Home Within Reach",
+  title: "Clear It",
   description:
-    "Find homes a family can afford, jobs that close the gap, and commutes that work.",
+    "Get your Newport Beach ADU permit application right the first time.",
 };
 
 export default function RootLayout({
