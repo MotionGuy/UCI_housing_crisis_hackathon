@@ -1,17 +1,15 @@
-// Placeholder for the Clear It intake. See docs/project-context.md.
-// Flow to build: step-by-step intake about the lot and project -> results page
-// (forms needed, sign-off departments, fees, issues with plain-English fixes,
-// ready-to-submit status). Pass/fail comes from cited rules, never from the AI.
+import { AduWizard } from "@/components/wizard/adu-wizard";
+
 export default function Home() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-3xl font-semibold tracking-tight">Clear It</h1>
-      <p className="mt-2 text-stone-600 dark:text-stone-400">
-        Get your Newport Beach ADU permit application right the first time.
+    <main className="page-glow flex min-h-dvh flex-col items-center px-4 py-10 sm:py-16">
+      <p className="mb-6 text-xs font-medium tracking-[0.2em] text-neutral-500 uppercase">
+        Clear It · Newport Beach ADU permits
       </p>
-      <p className="mt-8 text-sm text-stone-500">
-        This tool is not legal advice. Confirm all requirements with the City of
-        Newport Beach before you submit.
+      <AduWizard />
+      <p className="mt-8 max-w-md text-center text-xs leading-relaxed text-neutral-600">
+        This tool is not legal advice. Rules checked November 7, 2026. Confirm all requirements with
+        the City of Newport Beach (Planning Division, (949) 644-3204) before you submit.
       </p>
     </main>
   );

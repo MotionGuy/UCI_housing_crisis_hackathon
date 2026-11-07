@@ -1,18 +1,47 @@
 @import "tailwindcss";
 
-:root {
-  --background: #fafaf9;
-  --foreground: #1c1917;
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --color-accent: #2ee86f;
+  --color-accent-dim: #1f9e4c;
+  --color-panel: #121212;
+  --color-panel-2: #1a1a1a;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0c0a09;
-    --foreground: #f5f5f4;
+html,
+body {
+  background: #070707;
+  color: #f5f5f5;
+  color-scheme: dark;
+}
+
+/* Dotted grid inside the card, fading toward the bottom */
+.dot-grid {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 14px 14px;
+  mask-image: linear-gradient(to bottom, black 0%, transparent 55%);
+}
+
+/* Soft light beam in the top-left corner of the page */
+.page-glow {
+  background:
+    radial-gradient(600px 380px at 8% -5%, rgba(255, 255, 255, 0.14), transparent 70%),
+    radial-gradient(900px 600px at 50% 120%, rgba(46, 232, 111, 0.05), transparent 70%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .step-enter {
+    animation: step-enter 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
+@keyframes step-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

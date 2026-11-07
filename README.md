@@ -21,6 +21,7 @@ The applicant answers step-by-step questions about their lot and project. The ap
 - **Fees that apply**
 - **Issues likely to trigger a correction letter**, each with a plain-English fix
 - **Ready-to-submit status**
+- **The city's forms, filled in:** the building permit application and, for coastal lots, the Coastal Development Permit owner's affidavit, as downloadable PDFs
 
 Pass/fail comes from written rules based on Newport's ADU submittal checklist and state ADU law (Gov. Code §§ 66310–66342). Every rule cites its source. The AI helps with intake, explanations and reading uploaded documents, but it doesn't make the pass/fail decision. This is not legal advice.
 
@@ -53,24 +54,32 @@ Open http://localhost:3000.
 | `npm run start` | Runs the production build |
 | `npm run lint` | Runs ESLint |
 | `npm run typecheck` | Runs the TypeScript compiler without output |
+| `npm run forms:sample` | Fills the city forms with made-up sample data into `sample-forms/` |
 
 ## Project structure
 
 ```
 src/
   app/
-    page.tsx                 Intake + results (placeholder for now)
+    page.tsx                 Home page: the ADU intake wizard
     layout.tsx               Root layout
     globals.css              Tailwind entry point
     api/
       adu/check/route.ts     POST: ADU answers -> fast-path verdict, checks, documents, fees
+  components/wizard/
+    adu-wizard.tsx           The 7 intake steps
+    results.tsx              Verdict, filled-form downloads, checks, documents, fees, rights
+    ui.tsx                   Card, option rows, inputs (dark design)
       housing/route.ts       GET: homes from the housing research agent (or sample data)
   data/
     listings.json            Homes found by the housing research agent
   lib/
     adu/                     Clear It rules engine (types, Newport data, state law, evaluate)
+    forms/                   Fills the city's PDF forms with pdf-lib (field map in fill.ts)
     types.ts, sample-data.ts Listing types and samples for the housing agent
+public/forms/newport-beach/  Blank fillable city forms that the app fills in
 scripts/
+  fill-sample-forms.ts       npm run forms:sample: fills the forms with made-up sample data
   research-housing.ts        Housing research agent (Claude + web search)
 docs/
   lane-brief.md              Original project context (source of truth)
