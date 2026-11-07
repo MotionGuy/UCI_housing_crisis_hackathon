@@ -164,7 +164,7 @@ function permitsFor(a: AduAnswers): string[] {
 function documentsFor(a: AduAnswers): DocumentItem[] {
   const d = CITY.documents;
   const docs: DocumentItem[] = [];
-  if (a.coastalZone !== "no") docs.push(d.coastal);
+  if (a.coastalZone !== "no") docs.push(d.coastal, d.ownersAffidavit);
   docs.push(d.planCheck, d.buildingPermit, d.grantDeed, d.questionnaire);
   if (a.aduType === "jadu") {
     docs.push({ ...d.deedRestriction, why: "State law requires a deed restriction for JADUs, saying it won't be sold separately from the house." });

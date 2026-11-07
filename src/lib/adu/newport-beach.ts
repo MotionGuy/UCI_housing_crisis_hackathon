@@ -87,20 +87,26 @@ export const CITY = {
   review: { daysPerRound: "10–20", typicalRounds: "2–3", permitting: "1–6 months" },
 
   documents: {
+    // Local copies of every form: docs/forms/newport-beach/
     planCheck: {
-      name: "Plan check package",
-      why: "Your plans and the plan check application.",
+      name: "Plans (see Requirements for Submittal for Residential Additions and New Construction)",
+      why: "Checklist of what your plans must show: site plan, elevations, floor plans, survey and more.",
       url: "https://www.newportbeachca.gov/home/showpublisheddocument/3225/636089393638270000",
     },
     buildingPermit: {
-      name: "Building permit package",
-      why: "The building permit application.",
+      name: "Worksheet for Combo Building & Solar Permit Application",
+      why: "The main building permit application form.",
       url: "https://www.newportbeachca.gov/home/showpublisheddocument/15043/635682493202100000",
     },
     coastal: {
       name: "Coastal Development Permit application",
-      why: "Needed first if the lot is in the Coastal Zone.",
+      why: "Needed first if the lot is in the Coastal Zone. Uploaded to the CiViC portal.",
       url: "https://www.newportbeachca.gov/home/showpublisheddocument/51985/637805210162500000",
+    },
+    ownersAffidavit: {
+      name: "Discretionary Application Owner's Affidavit",
+      why: "Part of the Coastal Development Permit application.",
+      url: "https://www.newportbeachca.gov/home/showpublisheddocument/71896/638239938311670000",
     },
     grantDeed: {
       name: "Grant deed",

@@ -116,6 +116,8 @@ This table is the demo's strongest material: real, sourced examples of where an 
 
 ## How to submit in Newport Beach
 
+Local copies of every form, with what each one is: [forms/newport-beach/](forms/newport-beach/README.md). The CDP handout says Coastal Development Permit applications are uploaded to the CiViC portal, with a [Discretionary Application Owner's Affidavit](https://www.newportbeachca.gov/home/showpublisheddocument/71896/638239938311670000).
+
 1. **Check the address** with the city's [Address Search Tool](https://nbgis.newportbeachca.gov/gispub/PublicAddressSearch/default.aspx) to see the zoning and whether it's in the Coastal Zone.
 2. **If it's in the Coastal Zone,** a [Coastal Development Permit](https://www.newportbeachca.gov/home/showpublisheddocument/51985/637805210162500000) may be needed first, which "could possibly require a hearing."
 3. **Optional:** meet with city staff before applying.
