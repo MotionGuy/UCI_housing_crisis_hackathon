@@ -2,12 +2,14 @@
 
 Maintained by the `project-context` agent (`.claude/agents/project-context.md`). Every agent and teammate reads this before starting work. Source of truth: `docs/lane-brief.md` (wins over the README and any other doc). Main research: `docs/clear-it-newport.md`. Application package and form field maps: `docs/adu-application-guide.md`. Pitch: `docs/pitch.md`.
 
+> **Product name: AutoADU** (renamed from "Clear It" on 2026-11-07). `docs/lane-brief.md` keeps the original name because it's the team's original text, word for word.
+
 ## Mission
 
 > **We cut the 2–3 review cycles most ADU applications go through to one.**
 > ("2–3 cycles" source: Newport ADU guidebook. "Cut to one" is our goal, shown by the demo, not yet measured.)
 
-**"Clear It": TurboTax for ADU permits in Orange County, starting with Newport Beach.** The goal is to make the fast, ministerial approval path the normal path by getting the **first submission right**. We're not building a tool that just explains the rules.
+**"AutoADU": TurboTax for ADU permits in Orange County, starting with Newport Beach.** The goal is to make the fast, ministerial approval path the normal path by getting the **first submission right**. We're not building a tool that just explains the rules.
 
 - **Problem:** ministerial approval can cut housing timelines from about 4 years to about 2, but few people use it. Each of OC's 34 cities has its own forms, fees and checklists, cities misread state law (HCD sends correction letters), and most applications come back incomplete or need several correction rounds.
 - **Value:** Newport's ADU guidebook says applications typically need 2–3 review rounds of 10–20 business days each (about 1–3 months). Moving the typical project to **one review cycle** is the whole value proposition.
@@ -67,7 +69,7 @@ Plan check is a large share of a homeowner's ADU timeline, and the same rules en
 - `docs/clear-it-newport.md`: sourced Newport research (state law §§ 66310–66342, 2026 ordinance matrix, HCD's 13 findings, city-vs-state conflicts, submittal steps, fees, "2–3 rounds" of 10–20 days).
 - `docs/forms/newport-beach/`: city forms and reference PDFs, index, form fields as JSON.
 - **Rules engine** `src/lib/adu/` (contract `types.ts`: `AduAnswers` → `AduResult`; `evaluate.ts` checks `size`, `setback`, `height`, `guaranteed`, `parking`, `garage`, `owner`, `coastal`, `plans`; rights; documents; fees; steps). `POST /api/adu/check`.
-- Housing research agent (earlier idea): kept, **outside the Clear It lane**.
+- Housing research agent (earlier idea): kept, **outside the AutoADU lane**.
 
 **PR #2 (open, MotionGuy, `feat/adu-wizard-form-filling`; already merges `main`):**
 - `src/components/wizard/`: `adu-wizard.tsx` (7-step intake: address/zoning/APN → Coastal Zone → lot → ADU type → size/height/setback/transit/garage/pre-approved → owner → team and budget), `results.tsx` (engine headline, filled-form downloads, checks with citations, "Still to gather" documents with warnings, fees, next steps, rights), `ui.tsx`. Replaces the placeholder `src/app/page.tsx`; the disclaimer sits on the page, under the wizard and results.

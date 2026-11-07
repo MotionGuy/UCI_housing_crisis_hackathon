@@ -80,7 +80,8 @@ export function AduResultsView({
   const toGather = [...result.documents.filter((d) => !FILLED_DOC_NAMES.has(d.name)), ...(parcelEval?.documents ?? [])];
   const blocker = parcelEval?.checks.find((c) => c.status === "fail");
   const { fails, warns } = issuesOf(checks);
-  const otherChecks = checks.filter((c) => c.status === "pass" || c.status === "info");
+  // The deed-restriction conflict has its own "City vs. state conflict" card, so keep it out of "Checks that passed".
+  const otherChecks = checks.filter((c) => (c.status === "pass" || c.status === "info") && c.id !== "deed-restriction");
   const conflicts = notAllowed ? [] : result.documents.filter((d) => d.warning);
   const deedRight = result.rights.find((r) => r.id === "deed");
 

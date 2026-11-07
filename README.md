@@ -1,4 +1,4 @@
-# Clear It: UCI Impact Lab housing hackathon
+# AutoADU: UCI Impact Lab housing hackathon
 
 Our team's project for the **AI Impact Lab on affordable homeownership** at **UC Irvine** (one Saturday).
 
@@ -10,9 +10,9 @@ In Orange County, a faster path to building housing already exists on paper: min
 
 **Our question:** how do we make the fast path easy enough that it becomes the normal path?
 
-## Our idea: Clear It
+## Our idea: AutoADU
 
-**TurboTax for ADU permits**, starting with **Newport Beach**. Newport's ADU guidebook says applications typically need 2 to 3 review rounds of 10 to 20 business days each. Clear It aims to move the typical project to **one review cycle**.
+**TurboTax for ADU permits**, starting with **Newport Beach**. Newport's ADU guidebook says applications typically need 2 to 3 review rounds of 10 to 20 business days each. AutoADU aims to move the typical project to **one review cycle**.
 
 The applicant answers step-by-step questions about their lot and project. The app then shows:
 
@@ -74,7 +74,7 @@ src/
   data/
     listings.json            Homes found by the housing research agent
   lib/
-    adu/                     Clear It rules engine (types, Newport data, state law, evaluate)
+    adu/                     AutoADU rules engine (types, Newport data, state law, evaluate)
     forms/                   Fills the city's PDF forms with pdf-lib (field map in fill.ts)
     types.ts, sample-data.ts Listing types and samples for the housing agent
 public/forms/newport-beach/  Blank fillable city forms that the app fills in
