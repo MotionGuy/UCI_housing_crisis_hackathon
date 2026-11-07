@@ -38,8 +38,8 @@ The full implementation spec goes in [`.plans/`](.plans/). To write it, run `/jm
 Requirements: Node.js 20 or later, and npm.
 
 ```bash
-git clone https://github.com/<owner>/uci-impact-lab-housing.git
-cd uci-impact-lab-housing
+git clone https://github.com/MotionGuy/UCI_housing_crisis_hackathon.git
+cd UCI_housing_crisis_hackathon
 npm install
 cp .env.example .env.local   # then add your API keys
 npm run dev
