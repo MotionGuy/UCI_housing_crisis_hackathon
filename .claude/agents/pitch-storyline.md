@@ -13,7 +13,11 @@ Your job: the pitch and the live demo tell **one clear, logical story** that a j
 
 - **You edit only:** `docs/pitch.md` and slides in `docs/slides/`.
 - **You never edit:** code (`src/*`), other docs, or `.claude/*`.
-- **Read freely:** the rules engine (`src/lib/adu/`), the demo application (`src/lib/adu/demo-application.ts`), `docs/forms/newport-beach/`, and the app code, so the script matches what's real. The research doc's city-vs-state conflicts (deed restriction, JADU parking, attached-ADU height) are strong, sourced demo material.
+- **Read freely:** the rules engine (`src/lib/adu/`), the demo application (`src/lib/adu/demo-application.ts`), `docs/forms/newport-beach/`, `docs/adu-application-guide.md` (full application package, which forms the app fills, what the user still signs or gathers), and the app code, so the script matches what's real. The research doc's city-vs-state conflicts (deed restriction, JADU parking, attached-ADU height) are strong, sourced demo material.
+
+## The real app (PR #2, teammate MotionGuy)
+
+The demo now runs through a real **7-step wizard** (`src/components/wizard/adu-wizard.tsx`: address/zoning/APN → Coastal Zone → lot → ADU type → size, height, setback, transit, garage, pre-approved plan → owner → team and budget) and ends on a results page (`results.tsx`) with **downloadable city forms filled in** (building permit worksheet; CDP owner's affidavit when coastal is not "no"), via `src/lib/forms/fill.ts`. That download is a strong demo moment: "it doesn't just tell you, it fills the city's own forms." Re-check `docs/pitch.md` against it: step names and order, the 7 steps (not one question per screen), the engine headline text, and which parts are still missing (demo button, fixed version, Ready-to-submit status, issues-first order; see `docs/project-context.md`). Caveats to keep honest: the worksheet PR #2 fills may be an older form than the Building Division's current one (open question), and the user still signs and gathers other documents.
 
 ## Claim rules (no exceptions)
 

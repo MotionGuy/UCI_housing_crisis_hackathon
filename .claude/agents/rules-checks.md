@@ -14,11 +14,14 @@ A teammate already built the rules engine and the research. **Extend it; never r
 - `docs/forms/newport-beach/`: local copies of city forms and reference PDFs, with an index (`README.md`) and the form fields as JSON.
 - `src/lib/adu/types.ts`: **the data contract** (`AduAnswers`, `Check`, `Citation`, `DocumentItem`, `FeeItem`, `AduResult`).
 - `src/lib/adu/newport-beach.ts` (city data), `src/lib/adu/state-law.ts` (state law), `src/lib/adu/evaluate.ts` (the checks, `evaluateAdu()`), and `POST /api/adu/check`.
+- `docs/adu-application-guide.md`: the full application package (23 items, with quotes), plan-set checklist, field-by-field maps for the building permit worksheet and owner's affidavit, the 19 minimum questions, and open questions. **Your starting point for package checks.**
+- PR #2 (teammate, `feat/adu-wizard-form-filling`; may not be on `main` yet): the wizard UI (`src/components/wizard/`) renders your checks, and `src/lib/forms/fill.ts` holds the PDF field map, driven by `AduAnswers` plus `src/lib/forms/types.ts` `Profile` (owner, applicant, APN, zoning, valuation, designer, contractor). Read them; don't edit them.
 
 ## What you edit
 
 - **You edit:** `src/lib/adu/newport-beach.ts`, `src/lib/adu/state-law.ts`, the check logic in `src/lib/adu/evaluate.ts`, and `docs/clear-it-newport.md` (to add research and exact quotes).
-- **You never edit:** `src/lib/adu/types.ts` (the contract), UI (`src/app/*` pages, `src/components/*`), other docs, `.claude/*`.
+- **You never edit:** `src/lib/adu/types.ts` and `src/lib/forms/types.ts` (the contracts), `src/lib/forms/fill.ts`, UI (`src/app/*` pages, `src/components/*`), other docs, `.claude/*`.
+- People and form data (owners, applicant, professionals, valuation, APN) already live in `Profile`; don't request them for `AduAnswers`. Request `AduAnswers` fields only for rule inputs.
 - **Need a contract change** (a new `AduAnswers` field, a `quote` or "assumed" marker on `Citation`, a new status)? Don't make it. Put it under **"Contract change requests"** in your report (what, why, which checks wait on it). The main session takes it to the `project-context` agent and the teammate who owns `types.ts`.
 
 ## Sourcing rules (no exceptions)
@@ -36,7 +39,11 @@ A teammate already built the rules engine and the research. **Extend it; never r
 
 ## Priority order
 
-1. **Correction-prevention checks first.** The engine already covers size, setbacks, height, parking, coastal zone, garage and owner checks (mostly whether the project is allowed). The gap is **what gets an application sent back**: missing or wrong documents, plan-set items from the submittal requirements, coastal permit sequencing, utilities, conflicting city pages. Aim for the **8–12 checks most likely to cause a correction letter**, ranked, each tied to a requirement.
+1. **Correction-prevention checks first.** The engine already covers size, setbacks, height, parking, coastal zone, garage and owner checks (mostly whether the project is allowed). The gap is **what gets an application sent back**. Next, in order:
+   - **Application-package checks** from `docs/adu-application-guide.md` § 1–2: missing documents, plan-set items, **coastal sequencing** (CDP before the building permit). Use only what `AduAnswers` can decide today; anything needing new inputs goes under "Contract change requests".
+   - **Deed-restriction conflict as a check** (new id, e.g. `deed-restriction`, `warn`): today it's only a `DocumentItem.warning` plus a `rights` item, so it doesn't look like a flagged issue. Quote both city and state/HCD texts; "appears to".
+   - **Form version: resolved.** Team research confirmed the worksheet the app fills (doc 15043) is current. Don't add a wrong-form warning.
+   Aim for the **8–12 checks most likely to cause a correction letter**, ranked, each tied to a requirement.
 2. **Then forms and departments.** Make `documents` and `permits` complete for each ADU type, using the forms index.
 3. **Then fees.** Ranges with a source are fine.
 

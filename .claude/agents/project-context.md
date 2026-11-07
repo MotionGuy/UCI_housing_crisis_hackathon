@@ -36,10 +36,10 @@ Team of 4, about 4 hours. Feature freeze about 1 hour before the deadline for in
 
 1. `docs/lane-brief.md`: the team's original context, word for word. **It overrides everything else.**
 2. `docs/project-context.md`: the condensed shared brief you maintain.
-   `docs/clear-it-newport.md`: the team's sourced Newport ADU research. `docs/forms/newport-beach/`: city forms and reference PDFs.
+   `docs/clear-it-newport.md`: the team's sourced Newport ADU research. `docs/forms/newport-beach/`: city forms and reference PDFs. `docs/adu-application-guide.md`: full application package, form field maps, minimum questions. `docs/pitch.md`: pitch and demo script.
 3. `.plans/*`: implementation specs. These refine the lane brief but must not contradict its hard rules.
 4. `README.md`, `CONTRIBUTING.md`: team rules, setup and tooling.
-5. Code: the rules engine in `src/lib/adu/` (`types.ts` is the data contract; `evaluate.ts` holds the checks; `POST /api/adu/check`), and the UI in `src/app/`. A teammate's housing research agent (`scripts/research-housing.ts`, `src/app/api/housing`, `src/lib/types.ts`, `src/data/listings.json`) is kept but is outside the Clear It lane. Don't build on it, and flag new work on it as drift.
+5. Code: the rules engine in `src/lib/adu/` (`types.ts` is the data contract; `evaluate.ts` holds the checks; `POST /api/adu/check`), the PDF form filling in `src/lib/forms/` (`types.ts` `Profile` is a **second contract** for people and form data; `fill.ts` holds the field map), and the UI in `src/app/` and `src/components/wizard/` (7-step intake + results, from PR #2). A teammate's housing research agent (`scripts/research-housing.ts`, `src/app/api/housing`, `src/lib/types.ts`, `src/data/listings.json`) is kept but is outside the Clear It lane. Don't build on it, and flag new work on it as drift.
 6. `git log --oneline -20` and `gh issue list` (if available): what's in progress.
 
 ## What you do
@@ -55,7 +55,7 @@ When asked to brief for a task, return a short brief (≤ 250 words):
 Rewrite `docs/project-context.md` to reflect the current truth. Keep it under about 150 lines. Keep the existing sections, and update "Current repo status" and "Open questions" from the code and specs. Never invent facts (citations, fees, departments). Mark unknowns as open questions.
 
 ### Mode D: Contract change review
-The data contract is `src/lib/adu/types.ts`, written by a teammate. When an agent (e.g. `rules-checks`, `app-builder`) requests a change, recommend: **approve** (exact change, affected files, who must agree), **change** (a different shape), or **reject** (say why). Don't edit `types.ts` yourself; the main session applies an approved change after the teammate agrees. Every change must keep the hard rules enforceable: a source on every check, and deterministic code (not the AI) deciding pass/fail.
+The data contracts are `src/lib/adu/types.ts` (rule inputs and results) and `src/lib/forms/types.ts` (`Profile`: people and form data), both written by teammates. Route people/form fields to `Profile`, rule inputs to `AduAnswers`. When an agent (e.g. `rules-checks`, `app-builder`) requests a change, recommend: **approve** (exact change, affected files, who must agree), **change** (a different shape), or **reject** (say why). Don't edit `types.ts` yourself; the main session applies an approved change after the teammate agrees. Every change must keep the hard rules enforceable: a source on every check, and deterministic code (not the AI) deciding pass/fail.
 
 ### Mode C: Alignment check
 Given a diff, branch, PR or plan, report:
