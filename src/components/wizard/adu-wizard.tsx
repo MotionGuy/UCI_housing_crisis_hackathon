@@ -25,7 +25,8 @@ import type { ParcelLookupResult } from "@/lib/parcel/types";
 import { ParcelCard } from "./parcel-card";
 import { AduResultsView } from "./results";
 import { ReviewView, SubmitView } from "./review";
-import { OptionList, Segmented, StepCard, TextField, Toggle, linkClass, type Option } from "./ui";
+import { firstBlockedStep, stepIssues, type IssueField, type StepIssue } from "./step-checks";
+import { IssueNote, OptionList, Segmented, StepCard, TextField, Toggle, linkClass, type Option } from "./ui";
 
 const STEP_COUNT = 7;
 
@@ -103,10 +104,25 @@ export function AduWizard() {
     setDemoLoaded(true);
   };
 
+  // Rules-engine problems for the fields on this step: errors block Continue, warnings don't.
+  const issues = useMemo(() => stepIssues(step, a, p), [step, a, p]);
+  const blocked = issues.errors.length > 0;
+  const blockedHint = "Fix the values marked in red to continue.";
+  const fieldError = (f: IssueField) =>
+    issues.errors.some((i) => i.field === f) ? <Issues issues={issues} field={f} only="errors" /> : undefined;
+
   // The Coastal Zone step (1) is skipped when the city's GIS already answered it.
   const skipCoastal = !!p.parcel;
-  const next = () => {
+  /** Moves on from the current step. Pass the answers when they were just set (option steps). */
+  const next = (answers: AduAnswers = a) => {
+    if (stepIssues(step, answers, p).errors.length > 0) return;
     if (returnToReview) {
+      // A change (e.g. a new ADU type) can break a later step: send the user there first.
+      const broken = firstBlockedStep(answers, p, STEP_COUNT);
+      if (broken >= 0 && broken !== step) {
+        setStep(broken);
+        return;
+      }
       setReturnToReview(false);
       setView("review");
       return;
@@ -143,8 +159,9 @@ export function AduWizard() {
   const pick =
     <K extends keyof AduAnswers>(k: K) =>
     (v: AduAnswers[K]) => {
-      setAnswer(k, v);
-      next();
+      const answers = { ...a, [k]: v };
+      setA(answers);
+      next(answers);
     };
 
   if (view === "results") {
@@ -203,15 +220,16 @@ export function AduWizard() {
           icon={MapPin}
           title="Where's your property?"
           subtitle="We'll look up its zoning, parcel number and Coastal Zone status in the city's map."
-          onContinue={found || manual ? next : findProperty}
+          onContinue={found || manual ? () => next() : findProperty}
           continueLabel={found || lookup.status === "manual" ? "Continue" : failed ? "Continue by hand" : lookup.status === "loading" ? "Looking up…" : "Find my property"}
-          continueDisabled={!a.address.trim() || lookup.status === "loading"}
-          missingHint={lookup.status === "loading" ? undefined : "Add the property address to continue."}
+          continueDisabled={!a.address.trim() || lookup.status === "loading" || blocked}
+          missingHint={lookup.status === "loading" ? undefined : blocked ? "This lot doesn't qualify for the ADU fast path. Check the address." : "Add the property address to continue."}
         >
           <div className="space-y-4">
             <DemoBar onLoad={loadDemo} loaded={demoLoaded} />
             <TextField label="Property address" required autoComplete="street-address" placeholder="123 Example St, Newport Beach" value={a.address} onChange={changeAddress} />
             {found && <ParcelCard parcel={p.parcel!} />}
+            <Issues issues={issues} field="address" />
             {failed && (
               <p className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-[13.5px] leading-snug text-amber-200">{lookup.message}</p>
             )}
@@ -253,6 +271,7 @@ export function AduWizard() {
           }
         >
           <OptionList options={COASTAL} value={a.coastalZone} onPick={pick("coastalZone")} />
+          <Issues issues={issues} field="coastalZone" />
         </StepCard>
       );
 
@@ -272,18 +291,20 @@ export function AduWizard() {
 
     case 4:
       return (
-        <StepCard {...common} icon={Ruler} title="Size it up" subtitle="Rough numbers are fine. Your designer will confirm them." onContinue={next} continueDisabled={!(a.squareFeet > 0)} missingHint="Add the size in square feet to continue.">
+        <StepCard {...common} icon={Ruler} title="Size it up" subtitle="Rough numbers are fine. Your designer will confirm them." onContinue={() => next()} continueDisabled={blocked} missingHint={blockedHint}>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <TextField label="Size (sq ft)" type="number" inputMode="numeric" value={a.squareFeet || ""} onChange={(v) => setAnswer("squareFeet", Number(v))} />
-              <TextField label="Bedrooms" type="number" inputMode="numeric" value={a.bedrooms} onChange={(v) => setAnswer("bedrooms", Number(v))} hint="0 for a studio" />
+              <TextField label="Size (sq ft)" type="number" inputMode="numeric" value={a.squareFeet || ""} onChange={(v) => setAnswer("squareFeet", Number(v))} error={fieldError("squareFeet")} />
+              <TextField label="Bedrooms" type="number" inputMode="numeric" value={Number.isNaN(a.bedrooms) ? "" : a.bedrooms} onChange={(v) => setAnswer("bedrooms", v === "" ? NaN : Number(v))} hint="0 for a studio" error={fieldError("bedrooms")} />
               {isNew && (
                 <>
-                  <TextField label="Height (ft)" type="number" inputMode="numeric" value={a.heightFeet ?? ""} onChange={(v) => setAnswer("heightFeet", Number(v))} />
-                  <TextField label="Side and rear setback (ft)" type="number" inputMode="numeric" value={a.sideRearSetbackFeet ?? ""} onChange={(v) => setAnswer("sideRearSetbackFeet", Number(v))} hint="Distance to the nearest side or rear line" />
+                  <TextField label="Height (ft)" type="number" inputMode="numeric" value={a.heightFeet ?? ""} onChange={(v) => setAnswer("heightFeet", v === "" ? null : Number(v))} error={fieldError("heightFeet")} />
+                  <TextField label="Side and rear setback (ft)" type="number" inputMode="numeric" value={a.sideRearSetbackFeet ?? ""} onChange={(v) => setAnswer("sideRearSetbackFeet", v === "" ? null : Number(v))} hint="Distance to the nearest side or rear line" error={fieldError("sideRearSetbackFeet")} />
                 </>
               )}
             </div>
+            {/* Warnings (e.g. height above the state-guaranteed limit) don't block. */}
+            <Issues issues={issues} only="warnings" />
             <Segmented<YesNoUnsure>
               label="Public transit within a half-mile walk? (a bus stop counts)"
               value={a.nearTransit}
@@ -310,9 +331,9 @@ export function AduWizard() {
           icon={UserRound}
           title="Tell us about you"
           subtitle="The property owner, as it appears on the deed."
-          onContinue={next}
-          continueDisabled={missing.length > 0}
-          missingHint={missingHint}
+          onContinue={() => next()}
+          continueDisabled={missing.length > 0 || blocked}
+          missingHint={missingHint ?? blockedHint}
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField label="First name" required autoComplete="given-name" value={o.firstName} onChange={(v) => setOwner("firstName", v)} />
@@ -327,6 +348,7 @@ export function AduWizard() {
             <TextField label="Phone" type="tel" autoComplete="tel" value={o.phone} onChange={(v) => setOwner("phone", v)} />
             <div className="sm:col-span-2 space-y-3">
               <Toggle label="The owner will live on the property" checked={a.ownerLivesOnSite} onChange={(v) => setAnswer("ownerLivesOnSite", v)} />
+              <Issues issues={issues} field="ownerLivesOnSite" />
               <Toggle label="I'm the one applying (applicant is the owner)" checked={p.applicantIsOwner} onChange={(v) => setProfile("applicantIsOwner", v)} />
             </div>
             {!p.applicantIsOwner && (
@@ -351,8 +373,8 @@ export function AduWizard() {
           icon={Users}
           title="Your team and budget"
           subtitle="Optional. Skip it and add these later."
-          onSkip={next}
-          onContinue={next}
+          onSkip={() => next()}
+          onContinue={() => next()}
           continueLabel="Fill my forms"
         >
           <div className="space-y-5">
@@ -403,6 +425,24 @@ function DemoBar({ onLoad, loaded }: { onLoad: (a: AduAnswers) => void; loaded: 
       </button>
       <span className="text-xs text-neutral-500">{loaded ? "Sample data loaded. Click Continue." : "Made-up sample data"}</span>
     </div>
+  );
+}
+
+/** Engine messages for one field (or the whole step). Errors are red, warnings amber. */
+function Issues({ issues, field, only }: { issues: { errors: StepIssue[]; warnings: StepIssue[] }; field?: IssueField; only?: "errors" | "warnings" }) {
+  const of = (list: StepIssue[]) => (field ? list.filter((i) => i.field === field) : list);
+  const errors = only === "warnings" ? [] : of(issues.errors);
+  const warnings = only === "errors" ? [] : of(issues.warnings);
+  if (!errors.length && !warnings.length) return null;
+  return (
+    <span className="block">
+      {errors.map((i) => (
+        <IssueNote key={`e-${i.id}-${i.field}`} tone="error" message={i.message} limit={i.limit} citation={i.citation} />
+      ))}
+      {warnings.map((i) => (
+        <IssueNote key={`w-${i.id}-${i.field}`} tone="warning" title={i.title} message={i.message} citation={i.citation} />
+      ))}
+    </span>
   );
 }
 

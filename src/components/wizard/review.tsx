@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ClipboardCheck, Download, FileText, LoaderCircle, PencilLine, Send, TriangleAlert } from "lucide-react";
 import { CITY } from "@/lib/adu/newport-beach";
 import type { AduAnswers, AduResult } from "@/lib/adu/types";
-import { describeWork, fillAllForms } from "@/lib/forms/fill";
+import { describeWork } from "@/lib/forms/fill";
 import type { FilledForm, Person, Profile } from "@/lib/forms/types";
+import { PdfPreview, useFilledForms } from "./form-preview";
 import { CheckRow, StatusBanner, combineResults, issuesOf } from "./results";
 import { StepCard, linkClass } from "./ui";
 
@@ -151,6 +152,7 @@ export function ReviewView({
   const { result, checks, notAllowed } = useMemo(() => combineResults(answers, profile), [answers, profile]);
   const forms = useMemo(() => autofillPreview(answers, profile, valuationEstimated), [answers, profile, valuationEstimated]);
   const [confirmed, setConfirmed] = useState(false);
+  const pdfs = useFilledForms(answers, profile);
   const { fails, warns } = issuesOf(checks);
   const blocked = fails.length > 0 || notAllowed || result.verdict === "out-of-scope";
   const conflicts = result.documents.filter((d) => d.warning);
@@ -217,6 +219,9 @@ export function ReviewView({
                 </div>
               ))}
             </dl>
+            <div className="mt-4">
+              <PdfPreview pdf={pdfs.forms?.find((x) => x.id === f.id)} title={f.title} error={pdfs.error} updating={pdfs.updating} />
+            </div>
           </section>
         ))}
 
@@ -241,18 +246,7 @@ export function SubmitView({ answers, profile, onBack }: { answers: AduAnswers; 
   const { result, permits } = useMemo(() => combineResults(answers, profile), [answers, profile]);
   // With a lookup, the first step ("check your address") is already done.
   const steps = profile.parcel ? result.steps.slice(1) : result.steps;
-  const [forms, setForms] = useState<FilledForm[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fillAllForms(answers, profile)
-      .then((f) => !cancelled && setForms(f))
-      .catch((e: unknown) => !cancelled && setError(e instanceof Error ? e.message : "Could not fill the forms"));
-    return () => {
-      cancelled = true;
-    };
-  }, [answers, profile]);
+  const { forms, error, updating } = useFilledForms(answers, profile);
 
   const summary = useMemo(() => howToFile(answers, result, permits, steps), [answers, result, permits, steps]);
   const downloadSummary = () => save(new Blob([summary], { type: "text/plain" }), "newport-beach-adu-how-to-file.txt");
@@ -301,6 +295,20 @@ export function SubmitView({ answers, profile, onBack }: { answers: AduAnswers; 
             </ul>
           )}
         </section>
+
+        {forms && forms.length > 0 && (
+          <section className="space-y-6">
+            <h2 className="flex items-center gap-2 text-[13px] font-semibold tracking-wide text-neutral-400 uppercase">
+              <FileText className="size-4" /> Your filled forms
+            </h2>
+            {forms.map((f) => (
+              <div key={f.id}>
+                <p className="mb-2 text-[15px] font-medium text-white">{f.title}</p>
+                <PdfPreview pdf={f} title={f.title} updating={updating} />
+              </div>
+            ))}
+          </section>
+        )}
 
         <section>
           <h2 className="mb-3 flex items-center gap-2 text-[13px] font-semibold tracking-wide text-neutral-400 uppercase">
